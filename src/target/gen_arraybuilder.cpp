@@ -141,6 +141,7 @@ void regen_arraybuilder(FunctionInfo * finfo, ParseNode & array_builder) {
                 {
                     argtable.get_what()+=std::to_string(std::stoi(e))+".,";
                 }
+                argtable.get_what().pop_back();
             }
         }else if(array_builder.father->father->father->father->token_equals(TokenMeta::NT_VARIABLEDEFINE))
         {
@@ -153,12 +154,16 @@ void regen_arraybuilder(FunctionInfo * finfo, ParseNode & array_builder) {
                  * or inner array builder list,
                  * e.g.,
                  *   real,dimension(3,4)::b(3,4)=(/(/1,2,3/),(/4,5,6/),(/7,8,9/),(/10,11,12/) /)*/
-                std::vector<std::string> elem_list;
-                boost::split(elem_list,argtable.get_what(), boost::is_any_of(", "), boost::token_compress_on);
-                argtable.get_what() = "";
-                for(std::string e:elem_list)
+                if(array_builder.father->father->get(0).get_what()!="reshape" || &array_builder.father->get(0)==&array_builder)
                 {
-                    argtable.get_what()+=std::to_string(std::stoi(e))+".,";
+                    std::vector<std::string> elem_list;
+                    boost::split(elem_list,argtable.get_what(), boost::is_any_of(", "), boost::token_compress_on);
+                    argtable.get_what() = "";
+                    for(std::string e:elem_list)
+                    {
+                        argtable.get_what()+=std::to_string(std::stoi(e))+".,";
+                    }
+                    argtable.get_what().pop_back();
                 }
             }
         }
