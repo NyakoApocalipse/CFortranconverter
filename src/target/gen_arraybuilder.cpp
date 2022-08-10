@@ -18,6 +18,8 @@
 */
 
 #include "gen_common.h"
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 ParseNode gen_arraybuilder_from_paramtable(const ParseNode & argtable) {
 	/*****************
@@ -98,7 +100,7 @@ bool maybe_return_array(FunctionInfo * finfo, const ParseNode & elem) {
 			return true;
 		}
 	}
-	else if (elem.token_equals(TokenMeta::NT_ARGTABLE_PURE)){
+	else if (elem.token_equals(TokenMeta::NT_ARGTABLE_PURE, TokenMeta::NT_ARRAYBUILDER_LIST)){
 		// hard to determine, so return true
 		return true;
 	}
@@ -125,11 +127,53 @@ void regen_arraybuilder(FunctionInfo * finfo, ParseNode & array_builder) {
 		concat_array = std::accumulate(argtable.begin(), argtable.end(), false, [&](bool x, ParseNode * p) {
 			return x || maybe_return_array(finfo, *p);
 		});
+        if(array_builder.father->father->token_equals(TokenMeta::NT_VARIABLEDEFINE))
+        {
+            if(array_builder.father->father->get(0).get_what()=="double")
+            {
+                /* transform string so that every integer is appended with a decimal dot,
+                 * for make_init_list will output farray<T> deduced from  args' type,
+                 * which might lead to error when `a=make_init_list({1,2,3});` where a is of type farray<double>  */
+                std::vector<std::string> elem_list;
+                boost::split(elem_list,argtable.get_what(), boost::is_any_of(", "), boost::token_compress_on);
+                argtable.get_what() = "";
+                for(std::string e:elem_list)
+                {
+                    argtable.get_what()+=std::to_string(std::stoi(e))+".,";
+                }
+                argtable.get_what().pop_back();
+            }
+        }else if(array_builder.father->father->father->father->token_equals(TokenMeta::NT_VARIABLEDEFINE))
+        {
+            if(array_builder.father->father->father->father->get(0).get_what()=="double")
+            {
+                /* transform string so that every integer is appended with a decimal dot, same purpose as above
+                 * the extra nested level is due to function call,
+                 * e.g.,
+                 *   reshape( (/ 1,2,3,4,5,6,7,8,9,10,11,12/), (/ 3, 4 /) )
+                 * or inner array builder list,
+                 * e.g.,
+                 *   real,dimension(3,4)::b(3,4)=(/(/1,2,3/),(/4,5,6/),(/7,8,9/),(/10,11,12/) /)*/
+                if(array_builder.father->father->get(0).get_what()!="reshape" || &array_builder.father->get(0)==&array_builder)
+                {
+                    std::vector<std::string> elem_list;
+                    boost::split(elem_list,argtable.get_what(), boost::is_any_of(", "), boost::token_compress_on);
+                    argtable.get_what() = "";
+                    for(std::string e:elem_list)
+                    {
+                        argtable.get_what()+=std::to_string(std::stoi(e))+".,";
+                    }
+                    argtable.get_what().pop_back();
+                }
+            }
+        }
 		if (!concat_array)
 		{
 			// all elements in the array builder is scalar
 			// can init array from initializer_list of initial value
-			sprintf(codegen_buf, "make_init_list(%s)", argtable.get_what().c_str());
+            if(array_builder.father->father->get(0).get_what()=="reshape") sprintf(codegen_buf, "{%s}", argtable.get_what().c_str());
+            else if(argtable.child.size()>1) sprintf(codegen_buf, "make_init_list({%s})", argtable.get_what().c_str());
+            else sprintf(codegen_buf, "make_init_list(%s)", argtable.get_what().c_str());
 			arr_decl = string(codegen_buf);
 		}
 		else {
@@ -164,6 +208,10 @@ void regen_arraybuilder(FunctionInfo * finfo, ParseNode & array_builder) {
 					regen_paramtable(finfo, elem);
 					sprintf(codegen_buf, "make_init_list(%s)", elem.get_what().c_str());
 				}
+                else if(elem.token_equals(TokenMeta::NT_ARRAYBUILDER_LIST))
+                {
+                    regen_arraybuilder(finfo,elem);
+                }
 				else {
 					// literal
 					sprintf(codegen_buf, "make_init_list(%s)", elem.get_what().c_str());

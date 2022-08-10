@@ -1295,7 +1295,7 @@ using namespace std;
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($3));
 				CLEAN_DELETE($1, $2, $3);
 			}
-		| YY_DATA nlists '/' clists '/'
+	data_stmt : YY_DATA nlists '/' clists '/'
 		    {
 				ARG_OUT exp1 = YY2ARG($2);
 				ARG_OUT exp2 = YY2ARG($4);
@@ -1312,17 +1312,20 @@ using namespace std;
 				    else
 				    {
 				        lelem = exp1.get(0);
-				        lelem.get_what().append("(").append("INOUT("+std::to_string(i+1)+")").append(")");
+				        assert( lelem.token_equals(TokenMeta::UnknownVariant) ); /* only data a / 1,2,3,4/ is  supported */
+				        ParseNode arg = gen_token(Term{ TokenMeta::NT_ARGTABLE_PURE , std::to_string(i+1)}, gen_token(Term{TokenMeta::META_INTEGER,std::to_string(i+1)}));
+				        ParseNode func_arr_body = gen_token(Term{TokenMeta::NT_FUCNTIONARRAY, WHEN_DEBUG_OR_EMPTY("FUNCTIONARRAY GENERATED IN REGEN_SUITE") }, lelem, arg);
+				        lelem = func_arr_body;
 				    }
 
 				    ParseNode newToken = gen_promote(opnew.get_what(), TokenMeta::NT_EXPRESSION, lelem, exp2.get(i), opnew);
+				    newToken = gen_promote("%s;", TokenMeta::NT_STATEMENT, newToken);
 				    if(initialized)
 				    {
-				        ParseNode link = gen_token(Term{ TokenMeta::Let, "%s;%s" });
-				        newGroup = gen_promote(link.get_what(), TokenMeta::NT_EXPRESSION, newGroup, newToken, link);
+				        newGroup = gen_suite(newToken, newGroup);
 				    }else
 				    {
-				        newGroup = newToken;
+				        newGroup = gen_suite(newToken, gen_dummy());
 				        initialized = true;
 				    }
 				}
@@ -1597,7 +1600,24 @@ using namespace std;
 				CLEAN_DELETE($1, $2, $3);
 #endif
 			}
-				
+		| data_stmt
+			{
+				ARG_OUT data_stmt = YY2ARG($1);
+				$$ = RETURN_NT(gen_suite(data_stmt, gen_dummy()));
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
+				CLEAN_DELETE($1);
+			}
+		| data_stmt end_of_stmt suite
+			{
+				ARG_OUT data_stmt = YY2ARG($1);
+				ARG_OUT suite = YY2ARG($3);
+				$$ = RETURN_NT(gen_suite(data_stmt, suite));
+#ifdef USE_REUSE
+				CLEAN_DELETE($1, $2, $3);
+#else
+				CLEAN_DELETE($1, $2, $3);
+#endif
+			}
 		| interface_decl
 			{
 				// NT_INTERFACE
