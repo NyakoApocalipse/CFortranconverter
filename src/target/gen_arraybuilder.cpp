@@ -98,7 +98,7 @@ bool maybe_return_array(FunctionInfo * finfo, const ParseNode & elem) {
 			return true;
 		}
 	}
-	else if (elem.token_equals(TokenMeta::NT_ARGTABLE_PURE)){
+	else if (elem.token_equals(TokenMeta::NT_ARGTABLE_PURE, TokenMeta::NT_ARRAYBUILDER_LIST)){
 		// hard to determine, so return true
 		return true;
 	}
@@ -129,7 +129,9 @@ void regen_arraybuilder(FunctionInfo * finfo, ParseNode & array_builder) {
 		{
 			// all elements in the array builder is scalar
 			// can init array from initializer_list of initial value
-			sprintf(codegen_buf, "make_init_list(%s)", argtable.get_what().c_str());
+            if(array_builder.father->father->get(0).get_what()=="reshape") sprintf(codegen_buf, "{%s}", argtable.get_what().c_str());
+            else if(argtable.child.size()>1) sprintf(codegen_buf, "make_init_list({%s})", argtable.get_what().c_str());
+            else sprintf(codegen_buf, "make_init_list(%s)", argtable.get_what().c_str());
 			arr_decl = string(codegen_buf);
 		}
 		else {
@@ -164,6 +166,10 @@ void regen_arraybuilder(FunctionInfo * finfo, ParseNode & array_builder) {
 					regen_paramtable(finfo, elem);
 					sprintf(codegen_buf, "make_init_list(%s)", elem.get_what().c_str());
 				}
+                else if(elem.token_equals(TokenMeta::NT_ARRAYBUILDER_LIST))
+                {
+                    regen_arraybuilder(finfo,elem);
+                }
 				else {
 					// literal
 					sprintf(codegen_buf, "make_init_list(%s)", elem.get_what().c_str());
