@@ -355,6 +355,10 @@ const vector<KeywordMeta> keywords = {
 		, TokenMeta::META_ANY
 		, YY_READ
 	}
+	, KeywordMeta{ "fmt"
+		, TokenMeta::META_ANY
+		, YY_FMT
+	}
 	/* treat open/close as normal function */
 	//, KeywordMeta{ "open"
 	//	, TokenMeta::META_ANY
