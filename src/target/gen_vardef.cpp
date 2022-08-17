@@ -139,6 +139,13 @@ std::string regen_vardef_array_initial_str(FunctionInfo * finfo, VariableInfo * 
 			arr_decl += string(codegen_buf);
 		}
 	}
+    else if(vinfo->desc.constant.get()) /* if defining const, assign value during construction */
+    {
+        ParseNode & arraybuilder = entity_variable.get(1);
+        regen_arraybuilder(finfo,arraybuilder);
+        sprintf(codegen_buf, "{%s,%s}", gen_sliceinfo_str(lbound_vec.begin(),lbound_vec.end(),size_vec.begin(),size_vec.end()).c_str(), arraybuilder.get_what().c_str());
+        arr_decl+=string(codegen_buf);
+    }
 	else {
 		// init from array_builder
 		sprintf(codegen_buf, "{%s};\n", gen_sliceinfo_str(lbound_vec.begin(), lbound_vec.end(), size_vec.begin(), size_vec.end()).c_str());
