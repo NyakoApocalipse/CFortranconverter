@@ -173,7 +173,7 @@ struct farray {
 	}
 
 	template<int X>
-	const T & const_get(const size_type(&index)[X]) {
+	const T & const_get(const size_type(&index)[X]) const{
 		assert(X == dimension);
 		auto it = cbegin();
 		for (size_type i = 0; i < X; i++)
@@ -227,6 +227,11 @@ struct farray {
 		size_type index[sizeof...(args)] = { args... };
 		return get(index);
 	}
+  template<typename... Args>
+  const T & operator()(Args&&... args) const{
+    size_type index[sizeof...(args)] = { args... };
+    return get(index);
+  }
 
     T & operator=(const T b){
         int x=*(this->sz);

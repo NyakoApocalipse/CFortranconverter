@@ -9,14 +9,10 @@
 #define USE_FORARRAY
 int main()
 {
-        farray<int> a {{1, 1}, {3, 12}};
-        int i = 0;
-        const int one = 1;
-        const int zero = 0;
-        for(i = 1; i <= 3; i += 1){
-                assign_forslice(a, make_init_list({one, zero, zero, zero, one, zero, zero, zero, one}), {{i}, {1, 9}});
-        }
-        /*! assign_forslice(a, make_init_list({one,zero,zero, zero,one,zero, zero,zero,one}),{{i},{1:9}});*/
-        forwritefree(stdout, a(INOUT(1), INOUT(1)));
+        const farray<int> a {{1, 1}, {3, 4},make_init_list({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12})};
+        const farray<int> b {{1, 1}, {3, 4},forconcat({make_init_list({1, 2, 3}), make_init_list({4, 5, 6}), make_init_list({7, 8, 9}), make_init_list({10, 11, 12})})};
+        const farray<int> c {{1, 1}, {3, 4},forreshape({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {3, 4})};
+        forwritefree(stdout, a(INOUT(2), INOUT(3)), b(INOUT(2), INOUT(3)), c(INOUT(2), INOUT(3)));
+        //forwritefree(stdout,a(INOUT(2),INOUT(3)));
         return 0;
 }
