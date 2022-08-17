@@ -60,7 +60,16 @@ void regen_function_array(FunctionInfo * finfo, ParseNode & callable) {
 				string res = "{" + slice.get_what() + "}";
 				return res;
 			});
-			sprintf(codegen_buf, "forslice(%s, {%s})", head_name.c_str(), slice_info_str.c_str());
+            if(callable.father!= nullptr&&callable.father->child.size()==3&&callable.father->get(2).token_equals(TokenMeta::Let))
+            {   /* if part of e.g., a(i,1:9) = (/one,zero,zero, zero,one,zero, zero,zero,one/)
+                 * use assign_forslice to modify original array instead of copy
+                 */
+                sprintf(codegen_buf, "assign_forslice(%%s, %%s, {%s})", slice_info_str.c_str());
+                callable.father->get(2).get_what() = string(codegen_buf);
+                sprintf(codegen_buf, "%s", head_name.c_str());
+            }
+            else
+			    sprintf(codegen_buf, "forslice(%s, {%s})", head_name.c_str(), slice_info_str.c_str());
 			array_str = string(codegen_buf);
 		}
 		else {

@@ -757,6 +757,31 @@ void _forslice_impl(const slice_info<fsize_t>(&tp)[X], const farray<T> & farr, i
 		}
 	}
 };
+
+template <typename T, int X, typename _Iterator_In, typename _Iterator_Out>
+void _assign_forslice_impl(const slice_info<fsize_t>(&tp)[X], const farray<T> & farr, int deep, const fsize_t * delta_out, const fsize_t * delta_in
+                           , _Iterator_Out b_sliced, _Iterator_Out e_sliced, _Iterator_In b_old, _Iterator_In e_old)
+{
+  int _X = X;
+  for (fsize_t i = farr.LBound(deep); i < farr.LBound(deep) + farr.size(deep); i++)
+    {
+      bool hit = i >= tp[deep].fr && i <= tp[deep].to && ((i - tp[deep].fr) % tp[deep].step) == 0;
+      if (hit) {
+        if (deep + 1 == _X) { // if X not equal to narr.dimension, behaviour is not defined
+          *b_old = *b_sliced;
+        }
+        else { 
+          _assign_forslice_impl<T, X>(tp, farr, deep + 1, delta_out, delta_in, b_sliced, b_sliced + delta_out[deep], b_old, b_old + delta_in[deep]);
+        }
+      }
+      if (i != farr.LBound(deep) + farr.size(deep)) {
+        if (hit) {
+          b_sliced += delta_out[deep];
+        }
+        b_old += delta_in[deep];
+      }
+    }
+}
 _NAMESPACE_HIDDEN_END
 
 template <typename T, int X>
@@ -787,6 +812,30 @@ auto forslice(const farray<T> & farr, const slice_info<fsize_t>(&tp)[X]) {
 	_forslice_impl<T, X>(ntp, farr, 0, ndelta, farr.get_delta(), narr.begin(), narr.end(), farr.cbegin(), farr.cend());
 
 	return _RTN(narr);
+}
+
+template <typename T, int X>
+void assign_forslice(farray<T> & tarr, const farray<T> & farr, const slice_info<fsize_t>(&tp)[X]) {
+  slice_info<fsize_t> ntp[X];
+  // `narr` can have fewer dimensions than `farr`
+  assert(X <= tarr.dimension);
+  for (auto i = 0; i < X; i++)
+    {
+      if (tp[i].isall) {
+        // [from, to]
+        ntp[i] = slice_info<fsize_t>({ tarr.LBound(i), tarr.UBound(i) });
+      }
+      else {
+        // just copy
+        ntp[i] = slice_info<fsize_t>(tp[i]);
+      }
+    }
+
+  // because `narr` can have fewer dimensions than `farr`, `narr.get_delta()` can't be used here
+  fsize_t ndelta[X];
+  std::transform(ntp, ntp + X, ndelta, [](auto x) {return (x.to + 1 - x.fr) / x.step + ((x.to + 1 - x.fr) % x.step == 0 ? 0 : 1); }); // size
+  fa_layer_delta(ndelta, ndelta + X, ndelta);
+  _assign_forslice_impl<T, X>(ntp, tarr, 0, ndelta, tarr.get_delta(), farr.cbegin(), farr.cend(), tarr.begin(), tarr.end());
 }
 
 template <typename T>
