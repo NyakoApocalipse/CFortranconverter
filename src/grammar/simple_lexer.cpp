@@ -186,8 +186,26 @@ static char get_complete_char() {
 		// `new_line_p` is the first character of next line
 		if (check_continuation(return_char)) {
 			// if next line begin with continuation
+
+            /* in old implementation, even if continuation is true, then the first char of nextline will be returned, without set newline_marker to false,
+             * which makes the second char decides whether the newline start with a 'c/C', to reproduce the bug, try translate
+             * ==example start==
+             * A="hello and
+             * 0123456789...(char number)
+             *      0acat"
+             * 0123456789...(char number)
+             * ==example end==
+             * which is, second line start with 5 spaces followed by a number to be recognized as continuation mark,
+             * then the newline start with "ac", as long as the second char of line effective content be 'c/C', the
+             * line will be omitted as comment.
+             * To fix, we should, after check continuation, pretend that we have processed the first char and make the
+             * newline_marker false (in that case we skip the comment checking for first char of newline).
+             * NOTICE: by doing so we choose to skip the comment line checking for a line that is (not first) part of continuation,
+             * which is effectively forbidding comment between continuation, since its AMBIGUITY*/
+             handle_newline();
+             sc.newline_marker = false;
 		}
-		handle_newline();
+        else handle_newline();
 	}
 	else if (s[p] == '\r')
 	{

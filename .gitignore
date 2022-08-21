@@ -71,3 +71,6 @@ out
 # idea
 .idea
 cmake-build-debug
+
+# etags/ctags
+TAGS

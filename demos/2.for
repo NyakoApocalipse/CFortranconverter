@@ -1,8 +1,9 @@
-program arrayReshape
-      implicit none
-      integer,dimension(3,4),parameter:: a(3,4)=(/1,2,3,4,5,6,7,8,9,10,11,12/)
-      integer,dimension(3,4),parameter:: b(3,4)=(/(/1,2,3/),(/4,5,6/),(/7,8,9/),(/10,11,12/)/)
-      integer,dimension(3,4),parameter::c(3,4) = reshape( (/ 1,2,3,4,5,6,7,8,9,10,11,12/), (/ 3, 4 /) )
-write(*,*) a(2,3),b(2,3),c(2,3)
-
-end program arrayReshape
+program main
+character*(256) mat_gob_long(6)
+data mat_gob_long /'Material Potential Energy', &
+'Material K.E. (Closed Vol Pres)', &
+'Material Mass (Closed Volume)', &
+'C.G. X-Vel (X-Contact Force)', &
+'C.G. Y-Vel (Y-Contact Force)', &
+'C.G. Z-Vel (Z-Contact Force)'/
+end program
