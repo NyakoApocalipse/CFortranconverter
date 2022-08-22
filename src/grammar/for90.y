@@ -2325,15 +2325,15 @@ using namespace std;
 				CLEAN_DELETE($1, $2, $3, $4, $5, $6);
 			}
 	
-	select_stmt : _optional_construct_name YY_SELECT YY_CASE '(' exp ')' at_least_one_end_line case_stmt YY_ENDSELECT
+	select_stmt : _optional_construct_name YY_SELECT YY_CASE '(' exp ')' at_least_one_end_line case_stmt YY_ENDSELECT YY_WORD
 			{
 				ARG_OUT select = YY2ARG($2);
 				ARG_OUT exp = YY2ARG($5);
 				ARG_OUT case_stmt = YY2ARG($8);
 				ParseNode newnode = gen_token(Term{ TokenMeta::NT_SELECT, WHEN_DEBUG_OR_EMPTY("SELECT GENERATED IN REGEN_SUITE") }, exp, case_stmt);
 				$$ = RETURN_NT(newnode);
-				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($9));
-				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($10));
+				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
 			}
 
 	case_stmt_elem : YY_CASE '(' dimen_slice ')' at_least_one_end_line suite
