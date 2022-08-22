@@ -21,7 +21,7 @@
 #include <string>
 #include "fordefs.h"
 #include "forlang.h"
-#include <unistd.h>
+#include "io.h"
 
 _NAMESPACE_FORTRAN_BEGIN
 void foropenfile(int unit, foroptional<int> iostat, foroptional<forlabel> err, foroptional<std::string> file, foroptional<std::string> status = None, foroptional<std::string> access = None
