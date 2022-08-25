@@ -58,7 +58,10 @@ void regen_exp(FunctionInfo *finfo, ParseNode &exp) {
         if (vinfo->desc.pointer.isdirty()) {
             add_star(exp);
         }
-        if(vinfo->implicit_defined && !exp.father->get(1).child.empty())
+        /* for car%speed, current is car, the only child of its father, car.speed
+         * for a=1_FULLR, current is a, father is a=1_FULLR, the second child is 1_FULLR, who has a child "fullr"
+         **/
+        if(vinfo->implicit_defined && exp.father->child.size()>1 && !exp.father->get(1).child.empty())
         {
             ParseNode & literal_tail = exp.father->get(1).get(0);
             if(literal_tail.get_what()=="_fullr")
@@ -120,6 +123,8 @@ void regen_exp(FunctionInfo *finfo, ParseNode &exp) {
 
     } else if (exp.token_equals(TokenMeta::NT_VARIABLEDEFINESET)) {
     } else if (exp.token_equals(TokenMeta::NT_STATEMENT)) {
+    } else if (exp.token_equals(TokenMeta::PNULL)) {
+        exp.get_what() = "nullptr";
     } else if (exp.token_equals(TokenMeta::META_WORD)) {
     } else {
         print_error("error exp: ", exp);
@@ -133,6 +138,7 @@ VariableInfo *get_vinfo(FunctionInfo *finfo, ParseNode &exp) {
 
     if (exp.token_equals(TokenMeta::NT_DERIVED_TYPE)) {
         VariableInfo *parent_vinfo = get_vinfo(finfo, exp.get(0));
+        if(parent_vinfo == nullptr) return nullptr; /* type definition not found in current module, might be included using use stmt */
         std::string member = exp.get_what().substr(exp.get_what().rfind(".") + 1);
         return get_variable(get_context().current_module, parent_vinfo->type.get_what(), member);
     }
@@ -154,7 +160,7 @@ void parse_inner_variable(FunctionInfo *finfo, ParseNode &exp) {
 
     //VariableInfo* overall_vinfo = get_vinfo(finfo, exp);
     //std::map < std::string, VariableInfo* > variables = get_context().variables;
-    if (overall_vinfo->desc.pointer.isdirty()) {
+    if (overall_vinfo!= nullptr && overall_vinfo->desc.pointer.isdirty()) {
         add_star(exp);
     }
 }
