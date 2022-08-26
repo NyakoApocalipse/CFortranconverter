@@ -1,0 +1,4 @@
+^..\src\grammar\for90.y
+E:\vs2019\cfortran\CFortranTranslator\src\grammar\for90.tab.cpp
+^..\src\grammar\for90.l
+E:\vs2019\cfortran\CFortranTranslator\src\grammar\for90.flex.cpp

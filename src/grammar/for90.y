@@ -1060,6 +1060,29 @@ using namespace std;
                 CLEAN_DELETE($1, $2, $3);
             }
 
+	_optional_construct_name : YY_WORD ':'
+			{
+				$$ = $1;
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
+				CLEAN_DELETE($2);
+			}
+		|
+
+			{
+				$$ = RETURN_NT(gen_dummy());
+				update_pos(YY2ARG($$));
+			}
+	_optional_construct_end_name : YY_WORD
+	        {
+	            $$ = $1;
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
+			}
+		|
+			{
+				$$ = RETURN_NT(gen_dummy());
+				update_pos(YY2ARG($$));
+			}
+
 
 	stmt : exp 
 			{
@@ -1218,11 +1241,11 @@ using namespace std;
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
 				CLEAN_DELETE($1);
 			}
-		| YY_EXIT
+		| YY_EXIT _optional_construct_end_name
 			{
 				$$ = RETURN_NT(gen_token(Term{TokenMeta::Break, "break;"}));
-				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
-				CLEAN_DELETE($1);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($2));
+				CLEAN_DELETE($1, $2);
 			}
 		| YY_GOTO YY_INTEGER
 			{
@@ -2165,17 +2188,6 @@ using namespace std;
 			}
 
 	
-	_optional_construct_name : YY_WORD ':'
-			{
-				$$ = $1;
-				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
-				CLEAN_DELETE($2);
-			}
-		|
-			{
-				$$ = RETURN_NT(gen_dummy());
-				update_pos(YY2ARG($$));
-			}
 
 	//_optional_then : YY_THEN
 	//	|
@@ -2271,28 +2283,16 @@ using namespace std;
 				update_pos(YY2ARG($$));
 			}
 
-	do_stmt : _optional_construct_name YY_DO at_least_one_end_line suite crlf_or_not YY_ENDDO
+	do_stmt : _optional_construct_name YY_DO at_least_one_end_line suite crlf_or_not YY_ENDDO _optional_construct_end_name
 			{
 				ARG_OUT suite = YY2ARG($4);
 				ParseNode newnode = gen_token(Term{ TokenMeta::NT_DO, WHEN_DEBUG_OR_EMPTY("DO-BARE GENERATED IN REGEN_SUITE") }, suite);
 				$$ = RETURN_NT(newnode);
-				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($5));
-				CLEAN_DELETE($1, $2, $3, $4, $5);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($7));
+				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7);
 			}
-		| _optional_construct_name YY_DO _optional_label_construct variable '=' exp ',' exp at_least_one_end_line suite crlf_or_not YY_ENDDO
+		| _optional_construct_name YY_DO _optional_label_construct variable '=' exp ',' exp at_least_one_end_line suite crlf_or_not YY_ENDDO _optional_construct_end_name
 			{
-				YYSTYPE X1 = $1;
-				YYSTYPE X2 = $2;
-				YYSTYPE X3 = $3;
-				YYSTYPE X4 = $4;
-				YYSTYPE X5 = $5;
-				YYSTYPE X6 = $6;
-				YYSTYPE X7 = $7;
-				YYSTYPE X8 = $8;
-				YYSTYPE X9 = $9;
-				YYSTYPE X10 = $10;
-				YYSTYPE X11 = $11;
-				YYSTYPE X12 = $12;
 				ARG_OUT loop_variable = YY2ARG($4);
 				ARG_OUT exp_from = YY2ARG($6);
 				ARG_OUT exp_to = YY2ARG($8);
@@ -2300,10 +2300,10 @@ using namespace std;
 				ARG_OUT suite = YY2ARG($10);
 				ParseNode newnode = gen_token(Term{ TokenMeta::NT_DORANGE, WHEN_DEBUG_OR_EMPTY("DO-RANGE GENERATED IN REGEN_SUITE") }, loop_variable, exp_from, exp_to, step, suite);
 				$$ = RETURN_NT(newnode);
-				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($12));
-				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($13));
+				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);
 			}
-		| _optional_construct_name YY_DO _optional_label_construct variable '=' exp ',' exp ',' exp at_least_one_end_line suite crlf_or_not YY_ENDDO
+		| _optional_construct_name YY_DO _optional_label_construct variable '=' exp ',' exp ',' exp at_least_one_end_line suite crlf_or_not YY_ENDDO _optional_construct_end_name
 			{
 				ARG_OUT loop_variable = YY2ARG($4);
 				ARG_OUT exp_from = YY2ARG($6);
@@ -2312,20 +2312,20 @@ using namespace std;
 				ARG_OUT suite = YY2ARG($12);
 				ParseNode newnode = gen_token(Term{ TokenMeta::NT_DORANGE, WHEN_DEBUG_OR_EMPTY("DO-RANGE-STEP GENERATED IN REGEN_SUITE") }, loop_variable, exp_from, exp_to, step, suite);
 				$$ = RETURN_NT(newnode);
-				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($14));
-				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($15));
+				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);
 			}
-		| _optional_construct_name YY_DOWHILE exp at_least_one_end_line suite crlf_or_not YY_ENDDO
+		| _optional_construct_name YY_DOWHILE exp at_least_one_end_line suite crlf_or_not YY_ENDDO _optional_construct_end_name
 			{
 				ARG_OUT exp = YY2ARG($3);
 				ARG_OUT suite = YY2ARG($5);
 				ParseNode newnode = gen_token(Term{ TokenMeta::NT_WHILE, WHEN_DEBUG_OR_EMPTY("DO-WHILE GENERATED IN REGEN_SUITE") }, exp, suite);
 				$$ = RETURN_NT(newnode);
-				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($6));
-				CLEAN_DELETE($1, $2, $3, $4, $5, $6);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($8));
+				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8);
 			}
 	
-	select_stmt : _optional_construct_name YY_SELECT YY_CASE '(' exp ')' at_least_one_end_line case_stmt YY_ENDSELECT YY_WORD
+	select_stmt : _optional_construct_name YY_SELECT YY_CASE '(' exp ')' at_least_one_end_line case_stmt YY_ENDSELECT _optional_construct_end_name
 			{
 				ARG_OUT select = YY2ARG($2);
 				ARG_OUT exp = YY2ARG($5);

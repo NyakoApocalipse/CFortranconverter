@@ -1,0 +1,16 @@
+    integer(singI) :: ie, je
+    integer(singI) :: i, j
+    integer(singI) :: jnodes(CONST_NUM_SHELL_NODE)
+    integer(singI) :: ne
+    integer(singI) :: nCrackInitRegion = -1
+    if (nCrackInitRegion > 0) then
+       do ie = 1, nelem
+          je = 5
+          loop: do i = 1, nCrackInitRegion
+             if ( ie>1 ) then
+                exit loop
+             end if
+          end do loop
+       end do
+    end if
+
