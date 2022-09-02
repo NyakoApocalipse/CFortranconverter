@@ -21,7 +21,11 @@
 #include <string>
 #include "fordefs.h"
 #include "forlang.h"
+#if (defined(_MSC_VER) || defined(_WIN32) || defined(_WIN64)) && (!defined(POSIX))
 #include "io.h"
+#else
+#include <unistd.h>
+#endif
 
 _NAMESPACE_FORTRAN_BEGIN
 void foropenfile(int unit, foroptional<int> iostat, foroptional<forlabel> err, foroptional<std::string> file, foroptional<std::string> status = None, foroptional<std::string> access = None
