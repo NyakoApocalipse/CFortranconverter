@@ -1198,7 +1198,7 @@ using namespace std;
 			}			
 		| jump_stmt
 			{
-				$$ = RETURN_NT(gen_promote("%s;", TokenMeta::NT_CONTROL_STMT, YY2ARG($1)));
+				$$ = RETURN_NT(gen_promote("%s", TokenMeta::NT_CONTROL_STMT, YY2ARG($1)));
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
 				CLEAN_DELETE($1);
 			}
@@ -1243,7 +1243,7 @@ using namespace std;
 			}
 		| YY_EXIT _optional_construct_end_name
 			{
-				$$ = RETURN_NT(gen_token(Term{TokenMeta::Break, "break;"}));
+				$$ = RETURN_NT(gen_token(Term{TokenMeta::Break, "break;"},YY2ARG($2)));
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($2));
 				CLEAN_DELETE($1, $2);
 			}
@@ -2286,7 +2286,7 @@ using namespace std;
 	do_stmt : _optional_construct_name YY_DO at_least_one_end_line suite crlf_or_not YY_ENDDO _optional_construct_end_name
 			{
 				ARG_OUT suite = YY2ARG($4);
-				ParseNode newnode = gen_token(Term{ TokenMeta::NT_DO, WHEN_DEBUG_OR_EMPTY("DO-BARE GENERATED IN REGEN_SUITE") }, suite);
+				ParseNode newnode = gen_token(Term{ TokenMeta::NT_DO, WHEN_DEBUG_OR_EMPTY("DO-BARE GENERATED IN REGEN_SUITE") }, suite, YY2ARG($1));
 				$$ = RETURN_NT(newnode);
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($7));
 				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7);
@@ -2298,7 +2298,7 @@ using namespace std;
 				ARG_OUT exp_to = YY2ARG($8);
 				ParseNode step = gen_token(Term{ TokenMeta::META_INTEGER , UBOUND_DELTA_STR });
 				ARG_OUT suite = YY2ARG($10);
-				ParseNode newnode = gen_token(Term{ TokenMeta::NT_DORANGE, WHEN_DEBUG_OR_EMPTY("DO-RANGE GENERATED IN REGEN_SUITE") }, loop_variable, exp_from, exp_to, step, suite);
+				ParseNode newnode = gen_token(Term{ TokenMeta::NT_DORANGE, WHEN_DEBUG_OR_EMPTY("DO-RANGE GENERATED IN REGEN_SUITE") }, loop_variable, exp_from, exp_to, step, suite,YY2ARG($1));
 				$$ = RETURN_NT(newnode);
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($13));
 				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);
@@ -2310,7 +2310,7 @@ using namespace std;
 				ARG_OUT exp_to = YY2ARG($8);
 				ARG_OUT step = YY2ARG($10);
 				ARG_OUT suite = YY2ARG($12);
-				ParseNode newnode = gen_token(Term{ TokenMeta::NT_DORANGE, WHEN_DEBUG_OR_EMPTY("DO-RANGE-STEP GENERATED IN REGEN_SUITE") }, loop_variable, exp_from, exp_to, step, suite);
+				ParseNode newnode = gen_token(Term{ TokenMeta::NT_DORANGE, WHEN_DEBUG_OR_EMPTY("DO-RANGE-STEP GENERATED IN REGEN_SUITE") }, loop_variable, exp_from, exp_to, step, suite,YY2ARG($1));
 				$$ = RETURN_NT(newnode);
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($15));
 				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);
@@ -2319,7 +2319,7 @@ using namespace std;
 			{
 				ARG_OUT exp = YY2ARG($3);
 				ARG_OUT suite = YY2ARG($5);
-				ParseNode newnode = gen_token(Term{ TokenMeta::NT_WHILE, WHEN_DEBUG_OR_EMPTY("DO-WHILE GENERATED IN REGEN_SUITE") }, exp, suite);
+				ParseNode newnode = gen_token(Term{ TokenMeta::NT_WHILE, WHEN_DEBUG_OR_EMPTY("DO-WHILE GENERATED IN REGEN_SUITE") }, exp, suite,YY2ARG($1));
 				$$ = RETURN_NT(newnode);
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($8));
 				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8);

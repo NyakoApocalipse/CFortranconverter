@@ -21,8 +21,11 @@
 
 void regen_do(FunctionInfo * finfo, ParseNode & do_stmt) {
 	ParseNode & suite = do_stmt.get(0);
+    ParseNode & label = do_stmt.get(1);
 	regen_suite(finfo, suite, true);
+    string label_line = "\n"+label.get_what()+":nop();";
 	sprintf(codegen_buf, "while(true){\n%s}", tabber(suite.get_what()).c_str());
+    sprintf(codegen_buf,"%s%s",codegen_buf,label_line.c_str());
 	do_stmt.fs.CurrentTerm = Term{ TokenMeta::NT_DO, string(codegen_buf) };
 }
 
@@ -32,23 +35,29 @@ void regen_do_range(FunctionInfo * finfo, ParseNode & do_stmt){
 	ParseNode & exp2 = do_stmt.get(2);
 	ParseNode & exp3 = do_stmt.get(3);
 	ParseNode & suite = do_stmt.get(4);
+    ParseNode & label = do_stmt.get(5);
 	regen_exp(finfo, exp1);
 	regen_exp(finfo, exp2);
 	regen_exp(finfo, exp3);
 	regen_suite(finfo, suite, true);
+    string label_line = "\n"+label.get_what()+":nop();";
 	sprintf(codegen_buf, "for(%s = %s; %s <= %s; %s += %s){\n%s}"
 		, loop_variable.get_what().c_str(), exp1.get_what().c_str()
 		, loop_variable.get_what().c_str(), exp2.get_what().c_str()
 		, loop_variable.get_what().c_str(), exp3.get_what().c_str(), tabber(suite.get_what()).c_str());
+    sprintf(codegen_buf,"%s%s",codegen_buf,label_line.c_str());
 	do_stmt.fs.CurrentTerm = Term{ TokenMeta::NT_DORANGE, string(codegen_buf) };
 }
 
 void regen_do_while(FunctionInfo * finfo, ParseNode & do_stmt) {
 	ParseNode & exp = do_stmt.get(0);
 	ParseNode & suite = do_stmt.get(1);
+    ParseNode & label = do_stmt.get(2);
 	regen_exp(finfo, exp);
 	regen_suite(finfo, suite, true);
+    string label_line = "\n"+label.get_what()+":nop();";
 	sprintf(codegen_buf, "while(%s){\n%s}", exp.get_what().c_str(), tabber(suite.get_what()).c_str());
+    sprintf(codegen_buf,"%s%s",codegen_buf,label_line.c_str());
 	do_stmt.fs.CurrentTerm = Term{ TokenMeta::NT_WHILE, string(codegen_buf) };
 }
 

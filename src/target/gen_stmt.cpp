@@ -118,6 +118,15 @@ std::string regen_stmt(FunctionInfo * finfo, ParseNode & stmt) {
 			newsuitestr += string(codegen_buf);
 			newsuitestr += '\n';
 		}
+        else if (stmt.get(0).token_equals(TokenMeta::Break))
+        {
+            if(stmt.get(0).get(0).token_equals(TokenMeta::META_WORD)) /* exit with specified label word, convert to goto statement */
+                sprintf(codegen_buf,"goto %s;",stmt.get(0).get(0).get_what().c_str());
+            else /* just exit, convert simply to break; */
+                sprintf(codegen_buf,"%s",stmt.get_what().c_str());
+            newsuitestr += string(codegen_buf);
+            newsuitestr += '\n';
+        }
 		else {
 			newsuitestr += stmt.get_what();
 			newsuitestr += '\n';
