@@ -137,9 +137,13 @@ void regen_arraybuilder(FunctionInfo * finfo, ParseNode & array_builder) {
                 std::vector<std::string> elem_list;
                 boost::split(elem_list,argtable.get_what(), boost::is_any_of(", "), boost::token_compress_on);
                 argtable.get_what() = "";
+				std::string a;
                 for(std::string e:elem_list)
                 {
-                    argtable.get_what()+=std::to_string(std::stoi(e))+".,";
+					/*if (e[0] == '(') {
+						e = e.substr(1, e.length() - 2);
+					}*/ //change (-1.0) to -1.0
+                argtable.get_what()+=std::to_string(std::stoi(e))+", ";
                 }
                 argtable.get_what().pop_back();
             }
@@ -161,7 +165,10 @@ void regen_arraybuilder(FunctionInfo * finfo, ParseNode & array_builder) {
                     argtable.get_what() = "";
                     for(std::string e:elem_list)
                     {
-                        argtable.get_what()+=std::to_string(std::stoi(e))+".,";
+						/*if (e[0] == '(') {
+							e = e.substr(1, e.length() - 2);
+						}*/  //change (-1.0) to -1.0
+					argtable.get_what() += std::to_string(std::stoi(e)) + ", "; 
                     }
                     argtable.get_what().pop_back();
                 }

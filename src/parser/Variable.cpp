@@ -75,7 +75,7 @@ void forall_variable_in_function(std::string module_name, std::string function_n
 	else {
 		for(std::map<std::string, VariableInfo *>::value_type & pr : get_context().variables )
 		{
-			// the last `::` is ery important
+			// the last `::` is very important
 			// consider
 			// variable in the same function `suf` and `suffix`
 			if (boost::starts_with(pr.first, module_name + "::" + function_name + "::"))
