@@ -71,6 +71,13 @@ out
 # idea
 .idea
 cmake-build-debug
+cmake-build-vscode
 
+# .json
+*.json
+
+# .cache
+.cache
+CmakeCache.txt
 # etags/ctags
 TAGS
