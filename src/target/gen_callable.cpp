@@ -100,7 +100,9 @@ void regen_function_array(FunctionInfo * finfo, ParseNode & callable) {
             {
                 // variable
                 check_implicit_variable(finfo, head_name);
-            }
+            }else{
+              finfo->use_stmts.push_back(callable.child.at(3));
+}
 		}
 		string argtable_str;
 		/**************

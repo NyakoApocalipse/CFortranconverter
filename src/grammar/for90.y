@@ -744,8 +744,9 @@ using namespace std;
 			}
 		| YY_CALL function_array_body
 			{
-			    $2->addlist(*$1);
-				$$ = $2;
+                          /* add extra information so that when call xx is encountered, no implicit variable will be generated and will include header file(with content of func decl) for corresponding function, every call to a subroutine defined seperately in a single file will generate a header file named by func_name.h which contains the function declaration when converting(see gen_program.cpp:397, a new function gen_header_for_function_decls() is defined to generate the expected header file), so every call to externally defined function should be companied with a "include" command, here we re-use use-stmt of file to generate this "include" command, the information is processed afterwards, see gen_callable.cpp:104 */
+                          $2->addlist(*$1,gen_promote("#include \"%s.h\"", TokenMeta::NT_USE, YY2ARG(&($2->get(0)))));
+                          $$ = $2;
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
 				CLEAN_DELETE($1);
 			}
@@ -762,8 +763,11 @@ using namespace std;
 				* SHOULDN"T GENERATE VARDEF FOR `func`
 				*******************/
 				ARG_OUT callable_head = YY2ARG($2);
+                          /* SAME AS ABOVE!
+                             add extra information so that when call xx is encountered, no implicit variable will be generated and will include header file(with content of func decl) for corresponding function, every call to a subroutine defined seperately in a single file will generate a header file named by func_name.h which contains the function declaration when converting(see gen_program.cpp:397, a new function gen_header_for_function_decls() is defined to generate the expected header file), so every call to externally defined function should be companied with a "include" command, here we re-use use-stmt of file to generate this "include" command, the information is processed afterwards, see gen_callable.cpp:104 */
+
 				ParseNode newnode = gen_token(Term{TokenMeta::NT_FUCNTIONARRAY, WHEN_DEBUG_OR_EMPTY("FUNCTIONARRAY GENERATED IN REGEN_SUITE") }
-					, callable_head, gen_token(Term{TokenMeta::NT_ARGTABLE_PURE, ""}), *($1));
+					, callable_head, gen_token(Term{TokenMeta::NT_ARGTABLE_PURE, ""}), *($1),gen_promote("#include \"%s.h\"", TokenMeta::NT_USE, YY2ARG($2)));
 				$$ = RETURN_NT(newnode);
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($2));
 				CLEAN_DELETE($1, $2);

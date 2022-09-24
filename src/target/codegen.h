@@ -152,4 +152,5 @@ std::string get_mapped_function_name(std::string origin_name);
 
 // program 
 void gen_fortran_program(const ParseNode & wrappers);
+void gen_header_for_function_decls(std::string forward_decls, std::string filename);
 void do_trans(const std::string & src);
