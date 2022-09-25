@@ -307,19 +307,25 @@ void gen_fortran_program(const ParseNode & wrappers) {
         FunctionInfo * finfo;
         std::tie(std::ignore, finfo) = pr;
         std::string name = finfo->local_name;
+        std::string decl_per_func;
         if (name != "program" && name != "")
         {
-            forward_decls += gen_function_signature(finfo);
+            std::string signature = gen_function_signature(finfo);
+            forward_decls += signature;
             forward_decls += ";\n";
+            decl_per_func += signature+";\n";
             if(!finfo->func_alias.empty())
             {
                 for(std::string sig: gen_func_alias_signature(finfo))
                 {
                     forward_decls += sig;
                     forward_decls += ";\n";
+                    decl_per_func +=sig+";\n";
                 }
             }
         }
+        if(name != "program" && name != ""&&!decl_per_func.empty())
+            gen_header_for_function_decls(decl_per_func,name);
     });
     get_context().current_module = "";
 }

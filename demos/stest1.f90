@@ -1,5 +1,6 @@
 program stest1
     implicit none
+    use ma
     real x, y
     x = 5.0
     y = 100.0
