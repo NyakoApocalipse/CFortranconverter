@@ -49,7 +49,7 @@ bool is_exp(const ParseNode & exp) {
 	case TokenMeta::NT_ARRAYBUILDER_LIST:
 	case TokenMeta::NT_FUCNTIONARRAY:
 	case TokenMeta::NT_HIDDENDO:
-		isexp = true;
+		isexp = true; break;
 	default:
 		isexp = false;
 	}
