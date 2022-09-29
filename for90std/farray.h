@@ -81,6 +81,7 @@ static bool _map_impl_next(F f, size_type * cur, int dimension, int & cur_dim, c
 		}
 		std::copy_n(LBound, cur_dim, cur); // reset cur before dim
 		cur_dim = 0;
+		/* 0,0-1,0-0,1-1,1, index grow from left to right and start over when the rightmost index is incremented */
 	}
 	return true;
 }
@@ -157,23 +158,15 @@ struct farray {
 		auto it = begin();
 		for (size_type i = 0; i < X; i++)
 		{
-            static int j=0;
-            size_type off=0;
-            if(index[i]<lb[i]){
-                off = index[i]-1;
-                j=index[i];
-            }
-            else if(j!=0) off = index[i]-lb[i]+j;
-            else off = index[i]-lb[i];
-            //size_type off = index[i] - ((index[i]<lb[i])?1:lb[i]);
-            assert(off >= 0);
-            it += (off) * delta[i];
+			size_type off = index[i] - lb[i];
+			assert(off >= 0);
+			it += (off) * delta[i];
 		}
 		return *it;
 	}
 
 	template<int X>
-	const T & const_get(const size_type(&index)[X]) const{
+	const T & const_get(const size_type(&index)[X]) {
 		assert(X == dimension);
 		auto it = cbegin();
 		for (size_type i = 0; i < X; i++)
@@ -186,7 +179,7 @@ struct farray {
 	}
 
 	template<typename Iterator>
-	T & get(Iterator index_from, Iterator index_to) {
+	T & get(Iterator index_from, Iterator index_to) { /* \1,2,3\ partial of [1,2,3,4]*/
 		assert(index_to - index_from == dimension);
 		auto it = begin();
 		size_type i = 0;
@@ -214,7 +207,7 @@ struct farray {
 	}
 
 	template<int X>
-	const T & get(const size_type(&index)[X]) const {
+	const T & get(const size_type(&index)[X]) const/*not changing member variable*/ {
 		return const_get(index);
 	}
 	template<typename Iterator>
@@ -227,27 +220,6 @@ struct farray {
 		size_type index[sizeof...(args)] = { args... };
 		return get(index);
 	}
-  template<typename... Args>
-  const T & operator()(Args&&... args) const{
-    size_type index[sizeof...(args)] = { args... };
-    return get(index);
-  }
-
-    T & operator=(const T b){
-        int x=*(this->sz);
-        int y=*(this->lb);
-        for(int j=1;j<y;j++){
-            size_type index[1]={j};
-            get(index)=0.0;
-        }
-        for(int i=y;i<=x;i++){
-
-            size_type index[1]={i};
-            get(index)=b;
-        }
-        return *this->parr;
-    }
-
 	template<int X>
 	T & operator[](const slice_type (&index)[X]) {
 		return get(index);
@@ -354,7 +326,7 @@ struct farray {
 
 
 	template <typename F>
-	void map(F f) const {
+	void map(F f) const {/* invalid const, pointer returned by cbegin() is compatible to mutate element */
 		auto iter = cbegin();
 		auto newf = [&](fsize_t * cur) {			
 			f(*iter, cur);
@@ -427,9 +399,7 @@ struct farray {
 			*(this->lb + i) = *(l + i);
 			*(this->sz + i) = *(s + i);
 		}
-#ifdef USE_FORARRAY
 		fa_layer_delta(this->sz, this->sz + dim, delta);
-#endif
 	}
 
 	void clear() {
@@ -441,7 +411,7 @@ struct farray {
 		parr = new T[flatsize()];
 		std::fill_n(parr, flatsize(), value);
 	}
-	void reset_value(int X, const farray<T> * farrs) {
+	void reset_value(int X, const farray<T> * farrs) {/*lbound and sz not modified, need make sure the sum of farrs' flatten size be the same with old flat size*/
 		// reset value from several arrays
 		clear();
 		fsize_t flatsize = 0;
@@ -511,7 +481,8 @@ struct farray {
 		*	A rank-one array may be constructed from scalars and other arrays and may be reshaped into any allowable array shape
 		***************/
 		// Implicitly use a scalr to initialize an array, so shape of array is undetermined
-		int lower_bound[] = {1}, size[] = {1}, v[] = {scalar};
+		int lower_bound[] = {1}, size[] = {1};
+        T v[] = {scalar};
 		reset_array(1, lower_bound, size);
 		reset_value(v, v + 1);
 	}
@@ -762,31 +733,6 @@ void _forslice_impl(const slice_info<fsize_t>(&tp)[X], const farray<T> & farr, i
 		}
 	}
 };
-
-template <typename T, int X, typename _Iterator_In, typename _Iterator_Out>
-void _assign_forslice_impl(const slice_info<fsize_t>(&tp)[X], const farray<T> & farr, int deep, const fsize_t * delta_out, const fsize_t * delta_in
-                           , _Iterator_Out b_sliced, _Iterator_Out e_sliced, _Iterator_In b_old, _Iterator_In e_old)
-{
-  int _X = X;
-  for (fsize_t i = farr.LBound(deep); i < farr.LBound(deep) + farr.size(deep); i++)
-    {
-      bool hit = i >= tp[deep].fr && i <= tp[deep].to && ((i - tp[deep].fr) % tp[deep].step) == 0;
-      if (hit) {
-        if (deep + 1 == _X) { // if X not equal to narr.dimension, behaviour is not defined
-          *b_old = *b_sliced;
-        }
-        else { 
-          _assign_forslice_impl<T, X>(tp, farr, deep + 1, delta_out, delta_in, b_sliced, b_sliced + delta_out[deep], b_old, b_old + delta_in[deep]);
-        }
-      }
-      if (i != farr.LBound(deep) + farr.size(deep)) {
-        if (hit) {
-          b_sliced += delta_out[deep];
-        }
-        b_old += delta_in[deep];
-      }
-    }
-}
 _NAMESPACE_HIDDEN_END
 
 template <typename T, int X>
@@ -817,30 +763,6 @@ auto forslice(const farray<T> & farr, const slice_info<fsize_t>(&tp)[X]) {
 	_forslice_impl<T, X>(ntp, farr, 0, ndelta, farr.get_delta(), narr.begin(), narr.end(), farr.cbegin(), farr.cend());
 
 	return _RTN(narr);
-}
-
-template <typename T, int X>
-void assign_forslice(farray<T> & tarr, const farray<T> & farr, const slice_info<fsize_t>(&tp)[X]) {
-  slice_info<fsize_t> ntp[X];
-  // `narr` can have fewer dimensions than `farr`
-  assert(X <= tarr.dimension);
-  for (auto i = 0; i < X; i++)
-    {
-      if (tp[i].isall) {
-        // [from, to]
-        ntp[i] = slice_info<fsize_t>({ tarr.LBound(i), tarr.UBound(i) });
-      }
-      else {
-        // just copy
-        ntp[i] = slice_info<fsize_t>(tp[i]);
-      }
-    }
-
-  // because `narr` can have fewer dimensions than `farr`, `narr.get_delta()` can't be used here
-  fsize_t ndelta[X];
-  std::transform(ntp, ntp + X, ndelta, [](auto x) {return (x.to + 1 - x.fr) / x.step + ((x.to + 1 - x.fr) % x.step == 0 ? 0 : 1); }); // size
-  fa_layer_delta(ndelta, ndelta + X, ndelta);
-  _assign_forslice_impl<T, X>(ntp, tarr, 0, ndelta, tarr.get_delta(), farr.cbegin(), farr.cend(), tarr.begin(), tarr.end());
 }
 
 template <typename T>
