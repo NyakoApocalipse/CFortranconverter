@@ -192,19 +192,6 @@ struct farray {
 		return *it;
 	}
 
-    template<int X>
-    const T & const_get(const size_type(&index)[X]) const {
-        assert(X == dimension);
-        auto it = cbegin();
-        for (size_type i = 0; i < X; i++)
-        {
-            size_type off = index[i] - lb[i];
-            assert(off >= 0);
-            it += (off) * delta[i];
-        }
-        return *it;
-    }
-
 	template<typename Iterator>
 	const T & const_get(Iterator index_from, Iterator index_to) const {
 		assert(index_to - index_from == dimension);
@@ -237,18 +224,6 @@ struct farray {
 	T & operator[](const slice_type (&index)[X]) {
 		return get(index);
 	}
-
-    /* add operator for const instance */
-    template<typename... Args>
-    const T & operator()(Args&&... args) const{
-        const size_type index[sizeof...(args)] = { args... };
-        return get(index);
-    }
-    template<int X>
-    const T & operator[](const slice_type (&index)[X]) const{
-        return get(index);
-    }
-    /* END. add operator for const instance */
 
 	operator bool() {
 		// Return true if all elements in the array is true, otherwise false
@@ -499,16 +474,6 @@ struct farray {
 		reset_array(D, lower_bound, size);
 		reset_value(m.cbegin(), m.cend());
 	}
-
-    /* add construction between implicit convertable types */
-    template <int D, typename R>
-    farray(const size_type(&lower_bound)[D], const size_type(&size)[D], const farray<R> & m, bool isview = false) noexcept : is_view(isview)
-    {
-        // used when construct from a farray<T>
-        // copy and reshape from a farray
-        reset_array(D, lower_bound, size);
-        reset_value(m.cbegin(), m.cend());
-    }
 	farray(const T & scalar) noexcept : is_view(false) {
 		/***************
 		*	ISO/IEC 1539:1991 1.5.2
@@ -563,20 +528,8 @@ struct farray {
 		if (this == &x) return *this;
 		reset_value(x.cbegin(), x.cend());
 		return *this;
-    }
-
-    /* add assignment between implicit convertable types */
-    template <typename R>
-    farray<T> &operator=(const farray<R> &x) {
-      // only reset value, remain original shape
-      // use `copy_from`, or call `reset_array` before using `operator=`, if
-      // you want to copy the entire array
-      if ((void*)this == (void*)&x)
-        return *this;
-      reset_value(x.cbegin(), x.cend());
-      return *this;
-    }
-        farray<T> & operator=(farray<T> && x) {
+	}
+	farray<T> & operator=(farray<T> && x) {
 		// only reset value, remain original shape
 		// use `move_from`, or call `reset_array` before using `operator=`, if you want to move the entire array
 		if (this == &x) return *this;
@@ -706,6 +659,14 @@ farray<T> forconcat(const farray<T>(&farrs)[X])
 }
 
 
+/* a (possibly) right invocation
+      a= make_init_list({1,1},{3,4},[&](const fsize_t * cur){
+          for(int i = 0; i < 2;i++)
+          cout<<cur[i]<<" ";
+          cout<<endl;
+          return 1.0;
+      }); 
+*/
 template <int D, typename F/*, typename = std::enable_if_t<std::is_callable<F, size_type>::value>*/>
 auto make_init_list(const fsize_t(&from)[D], const fsize_t(&size)[D], F f) 
 -> farray<typename function_traits<decltype(f)>::result_type> {

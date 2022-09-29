@@ -108,8 +108,13 @@ bool maybe_return_array(FunctionInfo * finfo, const ParseNode & elem) {
 	{
 		// including literals
 		return false;
-	} 
-	else{
+	}
+    else if (is_exp(elem))
+    {
+        // -2
+        return false;
+    }
+    else{
 		print_error("Strange element", elem);
 		return true;
 	}
