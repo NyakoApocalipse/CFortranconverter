@@ -10,16 +10,17 @@
 int main()
 {
 	string buf = "                    ";
+	string chr = "";
 	int i = 0;
 	int j = 0;
 	string str = "                    ";
 	str = SS("111 222 apple");
-	forreadfree(str, &i);
+	forread(str, IOFormat{"%d\n", 0, 2}, &i);
 	forwritefree(stdout, i);
-	forreadfree(str, &j);
+	forread(str, IOFormat{"%d\n", 0, 2}, &j);
 	forwritefree(stdout, j);
-	forreadfree(str, &i, &j, &buf);
-	forwritefree(stdout, i, j, buf);
+	forread(str, IOFormat{"%d%d%1s%s\n", 0, 9}, &i, &j, &chr, &buf);
+	forwritefree(stdout, i, j, chr, buf);
 	
 	
 	

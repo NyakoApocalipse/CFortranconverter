@@ -1,37 +1,53 @@
 /* TODO: when write or read has more than one placeholders, the position in source string cannot move as in a file stream can */
 // read
 #include <utility>
-inline void _forread_noargs(const char * f, IOFormat & format) {
+#define ADVANCE_SSCANF_FORMAT(f,x,c)\
+    int advance = 0;\
+    if (sscanf((f),(std::string(c)+std::string("%n")).c_str(), &(x), &advance) != 1)/* technique inspired by: https://stackoverflow.com/questions/54279304/sscanf-get-a-pointer-to-end-position, but only for one conversion character */\
+        fprintf(stderr,(std::string("sscanf ERROR: string:%s, item:")+std::string(c)+std::string("\n")).c_str(),(f),(x));\
+    else\
+        f += advance;
+#define ADVANCE_SSCANF_FORMAT_S(f,x,c)\
+    int advance = 0;\
+    if (sscanf((f),(std::string(c)+"%n").c_str(), (x), &advance) != 1)/* technique inspired by: https://stackoverflow.com/questions/54279304/sscanf-get-a-pointer-to-end-position, but only for one conversion character */\
+        fprintf(stderr,(std::string("sscanf ERROR: string:%s, item:")+std::string(c)+std::string("\n")).c_str(),(f),(x));\
+    else\
+        f += advance;
+inline void _forread_noargs(const char * &f, IOFormat & format) {
 	format.strip_front();
 }
 
-template <typename T>
-void _str_sscanf(const char * f, const std::string & _format, T & x) {
-	sscanf(f, _format.c_str(), &x);
-}
-inline void _str_sscanf(const char * f, const std::string & _format, std::string & x) {
+inline void _str_sscanf(const char * &f, const std::string & _format, std::string & x) {
 	// std::ifstream ifs(f);
 	// ifs >> x;
 	char buf[1024];
-	sscanf(f, _format.c_str(), buf);
+//	sscanf(f, _format.c_str(), buf);
+    ADVANCE_SSCANF_FORMAT_S(f, buf, _format.c_str())
 	x = buf;
 }
 
 // read formatted step 2
+inline void _forread_one(const char * &f, IOFormat & format, char * x) {
+//	sscanf(f, "%s", x);
+    _forread_noargs(f, format);
+    std::string fmt = format.next_editing();
+    ADVANCE_SSCANF_FORMAT_S(f, x, format.c_str())
+};
 template <typename T>
-void _forread_one(const char * f, IOFormat & format, T & x) {
+void _forread_one(const char * &f, IOFormat & format, T & x) {
 	// strip front
 	_forread_noargs(f, format);
-	sscanf(f, format.next_editing().c_str(), &x);
+//	sscanf(f, format.next_editing().c_str(), &x);
+    ADVANCE_SSCANF_FORMAT(f,x,format.next_editing().c_str())
 };
-inline void _forread_one(const char * f, IOFormat & format, std::string & x) {
+inline void _forread_one(const char * &f, IOFormat & format, std::string & x) {
 	// strip front
 	_forread_noargs(f, format);
 	std::string fmt = format.next_editing();
 	_str_sscanf(f, fmt, x);
 };
 template <typename T>
-void _forread_one_arrf(const char * f, IOFormat & format, farray<T> & x) {
+void _forread_one_arrf(const char * &f, IOFormat & format, farray<T> & x) {
 	// clear front
 	_forread_noargs(f, format);
 	auto iter = x.cbegin();
@@ -42,24 +58,27 @@ void _forread_one_arrf(const char * f, IOFormat & format, farray<T> & x) {
 };
 // read formatted step 1
 template <typename T>
-void _forread_dispatch(const char * f, IOFormat & format, farray<T> * x) {
+void _forread_dispatch(const char * &f, IOFormat & format, farray<T> * x) {
 	_forread_one_arrf(f, format, *x);
 };
 template <typename T>
-void _forread_dispatch(const char * f, IOFormat & format, T * x) {
+void _forread_dispatch(const char * &f, IOFormat & format, T * x) {
 	_forread_one(f, format, *x);
 };
-inline void _forread_one(const char * f, IOFormat & format, std::string * x) {
+void _forreadfree_dispatch(const char * &f, IOFormat & format, char * x) {
+    _forread_one(f, format, x);
+};
+inline void _forread_dispatch(const char * &f, IOFormat & format, std::string * x) {
 	_forread_one(f, format, *x);
 };
 template <typename ... Types>
-void _forread_dispatch(const char * f, IOFormat & format, IOStuff<Types...> & iostuff) {
+void _forread_dispatch(const char * &f, IOFormat & format, IOStuff<Types...> & iostuff) {
 	foreach_tuple(iostuff.tp, [&](auto & x) {
 		_forread_dispatch(f, x);
 	});
 };
 template <typename T, typename F>
-void _forread_dispatch(const char * f, IOFormat & format, ImpliedDo<T, F> & l) {
+void _forread_dispatch(const char * &f, IOFormat & format, ImpliedDo<T, F> & l) {
 	format.strip_front();
 	while (l.has_next())
 	{
@@ -69,35 +88,52 @@ void _forread_dispatch(const char * f, IOFormat & format, ImpliedDo<T, F> & l) {
 
 // read formatted step 0
 
-inline void forread(const char *f, IOFormat &format){
+inline void forread(const char *&f, IOFormat &format){
     // iteration terminal
 };
 
 template <typename T, typename... Args>
-void forread(const std::string f, IOFormat & format, T&& x, Args&&... args) {
-  _forread_dispatch(f.c_str(), format, x);
-  forread(f.c_str(), format, std::forward<Args>(args)...);
+void forread(const std::string f, IOFormat format, T&& x, Args&&... args) {
+    const char *fp = f.c_str();
+    forread(fp, format, x, std::forward<Args>(args)...);
 };
 
-template <typename T, typename... Args>
-void forread(const std::string f, const std::string & format, T && x, Args&&... args) {
-	IOFormat _format(format);
-	_forread_dispatch(f.c_str(), _format, x);
-	forread(f.c_str(), _format, std::forward<Args>(args)...);
-};
+//template <typename T, typename... Args>
+//void forread(const std::string f, IOFormat format, T&& x, Args&&... args) {
+//    forread(f, format,x, std::forward<Args>(args)...);
+//};
 
 template <typename T, typename... Args>
-void forread(const char * f, IOFormat & format, T&& x, Args&&... args) {
+void forread(const std::string f, const std::string format, T && x, Args&&... args) {
+    const char *fp = f.c_str();
+    forread(fp, format, x, std::forward<Args>(args)...);
+};
+//template <typename T, typename... Args>
+//void forread(const std::string f, const std::string format, T&& x, Args&&... args) {
+//    forread(f, format,x, std::forward<Args>(args)...);
+//};
+
+template <typename T, typename... Args>
+void forread(const char * &f, IOFormat format, T&& x, Args&&... args) {
 	_forread_dispatch(f, format, x);
 	forread(f, format, std::forward<Args>(args)...);
 };
 
+//template <typename T, typename... Args>
+//void forread(const char * &f, IOFormat format, T&& x, Args&&... args) {
+//    forread(f, format,x, std::forward<Args>(args)...);
+//};
+
 template <typename T, typename... Args>
-void forread(const char * f, const std::string & format, T && x, Args&&... args) {
+void forread(const char * &f, const std::string format, T && x, Args&&... args) {
 	IOFormat _format(format);
 	_forread_dispatch(f, _format, x);
 	forread(f, _format, std::forward<Args>(args)...);
 };
+//template <typename T, typename... Args>
+//void forread(const char * &f, const std::string format, T&& x, Args&&... args) {
+//    forread(f, format,x, std::forward<Args>(args)...);
+//};
 
 // free format
 // read free step 2
