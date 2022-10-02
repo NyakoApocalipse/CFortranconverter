@@ -555,7 +555,7 @@ template <typename T>
 void _forread_dispatch(FILE * f, IOFormat & format, T * x) {
 	_forread_one(f, format, *x);
 };
-inline void _forread_one(FILE * f, IOFormat & format, std::string * x) {
+inline void _forread_dispatch(FILE * f, IOFormat & format, std::string * x) {
 	_forread_one(f, format, *x);
 };
 template <typename ... Types>
