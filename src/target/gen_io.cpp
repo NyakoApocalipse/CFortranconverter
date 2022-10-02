@@ -145,7 +145,8 @@ void regen_read(FunctionInfo * finfo, ParseNode & stmt) {
 	const ParseNode & io_info = stmt.get(0);
 	ParseNode & argtable = stmt.get(1);
 	string device = io_info.get(0).to_string();
-	bool is_stdio = (device == "-1" || device == "" || device == "0");
+    bool is_2_string = io_info.get(0).token_equals(TokenMeta::META_STRING);
+	bool is_stdio = (!is_2_string)&&(device == "-1" || device == "" || device == "0");
 	std::string argtable_str = gen_io_argtable_strex(finfo, argtable, "read", io_info.get(1).token_equals(TokenMeta::NT_AUTOFORMATTER));
 
 	if (argtable.length() == 0)
@@ -159,6 +160,9 @@ void regen_read(FunctionInfo * finfo, ParseNode & stmt) {
 			// device = "5"; // stdin
 			sprintf(codegen_buf, "forreadfree(stdin%s %s);\n", (argtable_str==""?"":","), argtable_str.c_str());
 		}
+        else if(is_2_string){
+            sprintf(codegen_buf, "forreadfree(%s%s %s);\n", device.c_str(), (argtable_str == "" ? "" : ","), argtable_str.c_str());
+        }
 		else {
 			sprintf(codegen_buf, "forreadfree(get_file(%s)%s %s);\n", device.c_str(), (argtable_str == "" ? "" : ","), argtable_str.c_str());
 		}
@@ -180,6 +184,10 @@ void regen_read(FunctionInfo * finfo, ParseNode & stmt) {
 			sprintf(codegen_buf, "forread(stdin, IOFormat{\"%s\", %d}%s %s);\n", ioformat.fmt.c_str()
 				, ioformat.reversion_start, (argtable_str == "" ? "" : ","), argtable_str.c_str());
 		}
+        else if(is_2_string){
+            sprintf(codegen_buf, "forread(%s, IOFormat{\"%s\", %d, %d}%s %s);\n", device.c_str()
+                    , ioformat.fmt.c_str(), ioformat.reversion_start, ioformat.reversion_end, (argtable_str == "" ? "" : ","), argtable_str.c_str());
+        }
 		else {
 			sprintf(codegen_buf, "forread(get_file(%s), IOFormat{\"%s\", %d, %d}%s %s);\n", device.c_str()
 				, ioformat.fmt.c_str(), ioformat.reversion_start, ioformat.reversion_end, (argtable_str == "" ? "" : ","), argtable_str.c_str());
@@ -272,7 +280,7 @@ void regen_print(FunctionInfo * finfo, ParseNode & stmt) {
 //specification, except within a character string edit descriptor(10.7.1, 10.7.2).
 //Examples of FORMAT statements are :
 //5 FORMAT(1PE12.4, I10)
-//9 FORMAT(I12, / , ¡¯ Dates : ¡¯, 2 (2I3, I5))
+//9 FORMAT(I12, / , ï¿½ï¿½ Dates : ï¿½ï¿½, 2 (2I3, I5))
 
 std::string add_escape_char(std::string s) {
 	string r;
@@ -465,15 +473,15 @@ for90std::IOFormat parse_ioformatter(const std::string & src) {
 			// 6(...) is handled in case '0' - '9'
 
 			repeat.push_back(instant_rep);
-			// ÖØ¸´´Ó'('µÄÏÂÒ»¸ö×Ö·û¿ªÊ¼
+			// ï¿½Ø¸ï¿½ï¿½ï¿½'('ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½Ê¼
 			repeat_from.push_back(rt.size());
 			reversion_start = (int)rt.size();
 			break;
 		case ')':
-			// ÖØ¸´×îºóÒ»¸öEditing
+			// ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Editing
 			term_editing();
 			{
-				// ÖØ¸´À¨ºÅÄÚ²¿µÄÏî
+				// ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½
 				string braced = rt.substr(repeat_from.back(), i - repeat_from.back() + 1);
 				for (int j = 1; j < repeat.back(); j++)
 				{

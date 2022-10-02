@@ -1729,6 +1729,23 @@ using namespace std;
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
 				CLEAN_DELETE($1);
 			}
+/* according to brief.md, string is converted to nothing, so here we add support for reading from string */
+		| YY_STRING
+			{
+				ARG_OUT str = YY2ARG($1);
+				string modified = "\"" + str.get_what().substr(1, str.get_what().size() - 2) + "\"";
+				$$ = RETURN_NT(gen_token(Term{ TokenMeta::META_STRING, str.get_what() }));
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
+				CLEAN_DELETE($1);
+			}
+		| variable
+			{
+				ARG_OUT var = YY2ARG($1);
+				$$ = RETURN_NT(gen_token(Term{ TokenMeta::META_STRING, var.get_what() }));
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
+				CLEAN_DELETE($1);
+			}
+/* end augmentation */
 		| YY_INTEGER
 			{
 				ARG_OUT integer = YY2ARG($1);

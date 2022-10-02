@@ -5,7 +5,7 @@
 /* CFortranTranslator is published under GPL license                  */
 /* refer to https://github.com/CalvinNeo/CFortranTranslator/ for more */
 /**********************************************************************/
-#include "../for90std/for90std.h" 
+#include "../../for90std/for90std.h" 
 #include <cstdio>
 #define USE_FORARRAY 
 int main()
@@ -16,8 +16,7 @@ int main()
         str = SS("111 222");
         IOFormat fmt = IOFormat{"%d%d"};
         forreadfree(str, &i,&j);
+         // forreadfree(stdin, &i,&j);
         forwritefree(stdout, i,j);
-	
-	
 	return 0;
 }
