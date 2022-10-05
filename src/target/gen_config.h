@@ -86,7 +86,8 @@ const std::map<std::string, std::string> funcname_map{
 
     // intrinsic
     ,
-    {"present", "forpresent"}};
+    {"present", "forpresent"},
+{"malloc", "malloc"}};
 
 #define _WS(X) #X
 
@@ -163,6 +164,7 @@ const std::map<std::string, std::vector<KeywordParamInfo>> sysfunc_args = {
     {"to_bool", {}},
     {"to_string", {}},
     {"to_double", {}},
+    {"malloc", {{"size", "int", ""}}},
     {"to_forcomplex", {}}
 
 };

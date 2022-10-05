@@ -100,6 +100,7 @@ std::vector<std::string> gen_func_alias_signature(FunctionInfo * finfo);
 std::string gen_paramtable_str(FunctionInfo * finfo, const std::vector<std::string> & paramtable_info, bool with_name = true);
 
 // var def
+ParseNode gen_assign(const ParseNode & pointer_pairs);
 ParseNode gen_vardef(const ParseNode & type_nospec, const ParseNode & variable_desc, const ParseNode & paramtable);
 ParseNode gen_vardef_from_default(const ParseNode & type, std::string name);
 std::string get_variable_name(const ParseNode & entity_variable);

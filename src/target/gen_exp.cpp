@@ -111,6 +111,30 @@ void regen_exp(FunctionInfo *finfo, ParseNode &exp) {
             regen_exp(finfo, exp.get(0));
         }
         regen_function_array(finfo, exp);
+        /* add assign and reshape after malloc */
+        if(exp.get(0).token_equals(TokenMeta::UnknownVariant)&&exp.get(0).get_what()=="malloc"){
+            if(exp.father->child.size()==3){
+                string filtered_name;
+                for(auto e:exp.father->get(0).get_what()){
+                    if(e=='('||e==')'||e=='*'){
+                        /*do nothing*/
+                    }
+                    else{
+                        filtered_name+=e;
+                    }
+                }
+                exp.father->get(0).get_what() = filtered_name;
+                VariableInfo *prob_pvinfo = get_variable(get_context().current_module,finfo->local_name,filtered_name);
+                sprintf(codegen_buf, "((%s *)%s)",prob_pvinfo->type.get_what().c_str(),exp.get_what().c_str());
+                exp.get_what() = string(codegen_buf);
+                if(prob_pvinfo!= nullptr && prob_pvinfo->desc.pointer&&prob_pvinfo->entity_variable.child.size()==0){
+                    /* is pointer! */
+                    /* don't know why malloc line ended with no ';' */
+                    sprintf(codegen_buf,prob_pvinfo->vardef_node->get_what().c_str(),stoi(exp.get(1).get_what()));
+                    exp.get_what()+=string(";")+string(codegen_buf);
+                }
+            }
+        }
     } else if (exp.token_equals(TokenMeta::NT_HIDDENDO)) {
         regen_hiddendo_exprex(finfo, exp);
     } else if (exp.token_equals(TokenMeta::Comments)) {

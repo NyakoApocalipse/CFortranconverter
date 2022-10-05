@@ -2019,6 +2019,15 @@ using namespace std;
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($4));
 				CLEAN_DELETE($1, $2, $3, $4);
 			}
+        /* struct: (META_ANY (NT_VARIABLEDESC),(NT_VARIABLEDESC),...)*/
+		 | YY_POINTER pointer_pairs
+			{
+				ARG_OUT pps = YY2ARG($2);
+				$$ = RETURN_NT(gen_assign(pps));
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($2));
+				CLEAN_DELETE($1, $2);
+			}
+
 		| type_spec variable_desc paramtable
 			{
 				ARG_OUT type_spec = YY2ARG($1);
@@ -2062,6 +2071,43 @@ using namespace std;
 				CLEAN_DELETE($1, $2);
 			}
 			*/
+
+
+	pointer_pairs : pointer_pair ',' pointer_pairs
+			{
+			    ARG_OUT pps = YY2ARG($3);
+			    ARG_OUT new_p = YY2ARG($1);
+			    pps.addchild(new_p);
+			    $$ = RETURN_NT(pps);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($3));
+				CLEAN_DELETE($1,$2,$3);
+			}
+		| pointer_pair
+			{
+			    ARG_OUT pp = YY2ARG($1);
+                ParseNode newnode = gen_token(Term{ TokenMeta::META_ANY, WHEN_DEBUG_OR_EMPTY("META_ANY GENERATED IN CRAY POINTER, GETTING POINTER_PAIRS, SINGLE") }, pp);
+			    $$ = RETURN_NT(newnode);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
+				CLEAN_DELETE($1);
+			}
+	pointer_pair : '(' variable ',' target ')'
+			{
+				ARG_OUT pointer = YY2ARG($2);
+				ARG_OUT pointee = YY2ARG($4);
+                ParseNode newnode = gen_token(Term{ TokenMeta::NT_VARIABLEDESC, WHEN_DEBUG_OR_EMPTY("NT_VARIABLEDESC GENERATED IN CRAY POINTER ASSIGNMENT") }, pointer, pointee);
+				$$ = RETURN_NT(newnode);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($5));
+				CLEAN_DELETE($1,$2,$3,$4,$5);
+			}
+	target : variable
+	| function_array_body
+			{
+
+			    ARG_OUT v = YY2ARG($1);
+				$$=RETURN_NT(gen_token(Term{ TokenMeta::NT_VARIABLE_ENTITY, WHEN_DEBUG_OR_EMPTY("NT_VARIABLE_ENTITY GENERATED IN target") }, v));
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
+				CLEAN_DELETE($1);
+			}
 
 	var_defs : var_def
 			{

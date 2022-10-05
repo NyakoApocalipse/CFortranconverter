@@ -235,6 +235,18 @@ ParseNode gen_vardef_from_default(const ParseNode & type, std::string name) {
 	return newnode;
 }
 
+ParseNode gen_assign(const ParseNode & pointer_pairs) {
+    ParseNode pointer_define_suite = gen_token(Term{ TokenMeta::NT_VARIABLEDEFINESET, WHEN_DEBUG_OR_EMPTY("VARDEFSET GENERATED IN POINTER") });
+    for(int i = 0; i<pointer_pairs.child.size(); i++){
+        ParseNode newvardef = gen_token(Term{ TokenMeta::NT_VOID, WHEN_DEBUG_OR_EMPTY("NT_VOID GENERATED IN POINTER") });
+        const ParseNode& var_desc = pointer_pairs.get(i);
+        const ParseNode& pointer = var_desc.get(0);
+        const ParseNode& pointee = var_desc.get(1);
+        newvardef.addlist(pointer, pointee);
+        pointer_define_suite.addchild(newvardef);
+    }
+    return pointer_define_suite;
+}
 ParseNode gen_vardef(const ParseNode & type_nospec, const ParseNode & variable_desc, const ParseNode & paramtable) {
 	ParseNode kvparamtable = promote_argtable_to_paramtable(paramtable); // a flattened paramtable with all keyvalue elements
 	ParseNode newnode = gen_token(Term{ TokenMeta::NT_VARIABLEDEFINESET, WHEN_DEBUG_OR_EMPTY("VARDEFSET GENERATED IN REGEN_SUITE") });
@@ -273,7 +285,10 @@ std::string regen_vardef(FunctionInfo * finfo, VariableInfo * vinfo, std::string
 	*	desc.slice.is_initialized() == true or,
 	*	desc.allocatable == true
 	*****************/
-	bool do_arr = vinfo->is_array() || is_function_array(entity_variable);
+	bool is_pointer = entity_variable.child.size()==0;
+    bool is_target = vinfo->desc.target&&vinfo->vardef_node->child.size()==0;
+    string pointer_name_reserve = is_target?vinfo->vardef_node->get_what():"";
+	bool do_arr = (!is_pointer)&&(vinfo->is_array() || is_function_array(entity_variable));
 	string var_decl, type_str;
 	/*****************
 	* IMPORTANT
@@ -306,7 +321,7 @@ std::string regen_vardef(FunctionInfo * finfo, VariableInfo * vinfo, std::string
 
 		// get slice info
 		type_str = gen_qualified_typestr(type_nospec, desc, false);
-		string initial = regen_vardef_array_initial_str(finfo, vinfo, desc.slice.get());
+		string initial = is_target? "{}":regen_vardef_array_initial_str(finfo, vinfo, desc.slice.get());
 		sprintf(codegen_buf, "%s %s %s", type_str.c_str(), alias_name.c_str(), initial.c_str());
 		var_decl = string(codegen_buf);
 
@@ -341,7 +356,7 @@ std::string regen_vardef(FunctionInfo * finfo, VariableInfo * vinfo, std::string
 		type_str = gen_qualified_typestr(type_nospec, desc, false);
 		sprintf(codegen_buf, "%s %s", type_str.c_str(), alias_name.c_str());
 		var_decl = string(codegen_buf);
-		var_decl += regen_vardef_scalar_initial_str(finfo, vinfo);
+		var_decl += (is_pointer)?" = nullptr": regen_vardef_scalar_initial_str(finfo, vinfo);
 		if (vinfo->vardef_node == nullptr)
 		{
 			// considered to be implicitly defined

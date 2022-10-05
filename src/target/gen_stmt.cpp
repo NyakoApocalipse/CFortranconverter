@@ -151,6 +151,66 @@ std::string regen_stmt(FunctionInfo * finfo, ParseNode & stmt) {
 			}
 			ParseNode & type_nospec = vardef_node.get(0);
 			ParseNode & vardescattr = vardef_node.get(1);
+            /*pointer assign*/
+            if(vardef_node.token_equals(TokenMeta::NT_VOID)){
+                ParseNode& pointer = vardef_node.get(0);
+                ParseNode& pointee = vardef_node.get(1);
+                string pointee_name = get_variable_name(pointee);
+                VariableInfo *vinfo = get_variable(get_context().current_module, finfo->local_name, pointee_name);
+                if(vinfo== nullptr){
+                    sprintf(codegen_buf, "%s pointer to a variable %s which does not exist in %s", pointer.get_what().c_str(), pointee_name.c_str(), vinfo->local_name.c_str());
+                    fatal_error(string(codegen_buf), vardef_node);
+                }
+                else{
+                    vinfo->desc.target = true;
+
+                    vinfo->entity_variable = pointee;
+                    vinfo->vardef_node = new ParseNode(pointer);
+
+
+                    VariableInfo *pvinfo = add_variable(get_context().current_module, finfo->local_name,
+                                                        pointer.get_what(), VariableInfo{});
+                    pvinfo->desc.merge(vinfo->desc);
+                    pvinfo->desc.target = false;
+                    pvinfo->desc.pointer = true;
+                    pvinfo->commonblock_index = 0;
+                    pvinfo->commonblock_name = "";
+                    pvinfo->implicit_defined=false;
+                    pvinfo->type = vinfo->type;
+                    pvinfo->entity_variable = pointer;
+                    pvinfo->vardef_node = new ParseNode(vardef_node);
+
+                    /* pointer variable captured in for90.y:2095 should be single */
+                    /* nodet.parr = p; */
+                    sprintf(codegen_buf, "\n%s.parr = %s;",pointee_name.c_str(), pointer.get_what().c_str());
+                    string assign = string(codegen_buf);
+                    /* nodet.reset_array({{1,3},{1,4}}); */
+                    ParseNode& argtable = pointee.get(0).get(1);
+                    vector<string> sizes;
+                    string expression="1";
+                    for(ParseNode* e: argtable){
+                        if(e->token_equals(TokenMeta::META_INTEGER,TokenMeta::Int)){
+                            sizes.push_back(e->get_what());
+                            expression+=string(" * ")+e->get_what();
+                        }else{
+                            sprintf(codegen_buf,"(%%d / (%s))",expression.c_str());
+                            sizes.emplace_back(string(codegen_buf));
+                            break;
+                        }
+                    }
+                    string slice_str;
+                    for(auto str:sizes){
+                        sprintf(codegen_buf,",{%d,%s}",1,str.c_str());
+                        slice_str+=string(codegen_buf);
+                    }
+                    slice_str = slice_str.substr(1);
+                    slice_str=string("{")+slice_str+string("}");
+                    sprintf(codegen_buf, "\n%s.reset_array(%s);",pointee_name.c_str(),slice_str.c_str());
+                    string reshape = string(codegen_buf);
+                    pvinfo->vardef_node->get_what() = assign+reshape;
+                    continue;
+                }
+            }
 			ParseNode & entity_variable = vardef_node.get(2);
 			std::string name = get_variable_name(entity_variable);
             if(!type_nospec.child.empty()&&type_nospec.get(0).token_equals(TokenMeta::UnknownVariant))
