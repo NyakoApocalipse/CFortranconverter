@@ -55,7 +55,7 @@ void regen_exp(FunctionInfo *finfo, ParseNode &exp) {
     } else if (exp.token_equals(TokenMeta::UnknownVariant)) {
         check_implicit_variable(finfo, exp.to_string());
         VariableInfo *vinfo = get_vinfo(finfo, exp);
-        if (vinfo->desc.pointer.isdirty()) {
+        if (vinfo->desc.pointer.isdirty()&&!vinfo->desc.cray_pointer) {
             add_star(exp);
         }
         /* for car%speed, current is car, the only child of its father, car.speed
@@ -125,13 +125,13 @@ void regen_exp(FunctionInfo *finfo, ParseNode &exp) {
                 }
                 exp.father->get(0).get_what() = filtered_name;
                 VariableInfo *prob_pvinfo = get_variable(get_context().current_module,finfo->local_name,filtered_name);
-                sprintf(codegen_buf, "((%s *)%s)",prob_pvinfo->type.get_what().c_str(),exp.get_what().c_str());
+                sprintf(codegen_buf, "((%s *)%s);",prob_pvinfo->type.get_what().c_str(),exp.get_what().c_str());
                 exp.get_what() = string(codegen_buf);
-                if(prob_pvinfo!= nullptr && prob_pvinfo->desc.pointer&&prob_pvinfo->entity_variable.child.size()==0){
+                if(prob_pvinfo!= nullptr && prob_pvinfo->desc.cray_pointer){
                     /* is pointer! */
                     /* don't know why malloc line ended with no ';' */
                     sprintf(codegen_buf,prob_pvinfo->vardef_node->get_what().c_str(),stoi(exp.get(1).get_what()));
-                    exp.get_what()+=string(";")+string(codegen_buf);
+                    exp.get_what()+=string(codegen_buf);
                 }
             }
         }
@@ -184,7 +184,7 @@ void parse_inner_variable(FunctionInfo *finfo, ParseNode &exp) {
 
     //VariableInfo* overall_vinfo = get_vinfo(finfo, exp);
     //std::map < std::string, VariableInfo* > variables = get_context().variables;
-    if (overall_vinfo!= nullptr && overall_vinfo->desc.pointer.isdirty()) {
+    if (overall_vinfo!= nullptr && overall_vinfo->desc.pointer.isdirty() && !overall_vinfo->desc.cray_pointer) {
         add_star(exp);
     }
 }

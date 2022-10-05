@@ -285,7 +285,7 @@ std::string regen_vardef(FunctionInfo * finfo, VariableInfo * vinfo, std::string
 	*	desc.slice.is_initialized() == true or,
 	*	desc.allocatable == true
 	*****************/
-	bool is_pointer = entity_variable.child.size()==0;
+	bool is_pointer = vinfo->desc.cray_pointer;
     bool is_target = vinfo->desc.target&&vinfo->vardef_node->child.size()==0;
     string pointer_name_reserve = is_target?vinfo->vardef_node->get_what():"";
 	bool do_arr = (!is_pointer)&&(vinfo->is_array() || is_function_array(entity_variable));

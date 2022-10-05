@@ -173,6 +173,7 @@ std::string regen_stmt(FunctionInfo * finfo, ParseNode & stmt) {
                     pvinfo->desc.merge(vinfo->desc);
                     pvinfo->desc.target = false;
                     pvinfo->desc.pointer = true;
+                    pvinfo->desc.cray_pointer = true;
                     pvinfo->commonblock_index = 0;
                     pvinfo->commonblock_name = "";
                     pvinfo->implicit_defined=false;

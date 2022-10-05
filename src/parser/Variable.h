@@ -84,6 +84,7 @@ struct VariableDesc {
 	dirty<bool> allocatable = false;
 	dirty<bool> target = false;
 	dirty<bool> pointer = false;
+	dirty<bool> cray_pointer = false;
 	void merge(const VariableDesc & x2) {
 		if (!reference.isdirty() && x2.reference.isdirty()) {
 			reference = x2.reference;
@@ -115,6 +116,9 @@ struct VariableDesc {
 		if (!pointer.isdirty() && x2.pointer.isdirty()) {
 			pointer = x2.pointer;
 		}
+		if (!cray_pointer.isdirty() && x2.cray_pointer.isdirty()) {
+			cray_pointer = x2.cray_pointer;
+		}
 	}
 
 	VariableDesc() {
@@ -122,7 +126,7 @@ struct VariableDesc {
 	}
 	VariableDesc(boost::optional<bool> reference, boost::optional<bool> constant, boost::optional<bool> optional, boost::optional<ParseNode> slice
 		, boost::optional<int> kind, boost::optional<bool> save, boost::optional<bool> allocatable, boost::optional<bool> target
-		, boost::optional<bool> pointer, boost::optional<bool> inout_reference) {
+		, boost::optional<bool> pointer, boost::optional<bool> inout_reference, boost::optional<bool> cray_pointer=false) {
 		if (reference.is_initialized())
 			this->reference = reference._value_or(this->reference);
 		if (inout_reference.is_initialized())
@@ -143,6 +147,8 @@ struct VariableDesc {
 			this->target = target._value_or(this->target);
 		if (pointer.is_initialized())
 			this->pointer = pointer._value_or(this->pointer);
+		if (cray_pointer.is_initialized())
+			this->cray_pointer = cray_pointer._value_or(this->cray_pointer);
 	}
 };
 
