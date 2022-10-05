@@ -15,7 +15,7 @@ filter_cost_time(){
   done
 }
 cd ../../build && make -j 12 && cd ../demos/forstdio
-../../bin/CFortranTranslator -fF ./read.f90 > read.cpp
+../../bin/CFortranTranslator -fF ./read.f90 > ./read.cpp
 filter_cost_time read.cpp
 find_for90std read.cpp
 

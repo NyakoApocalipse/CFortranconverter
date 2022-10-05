@@ -65,7 +65,9 @@ template <typename T>
 void _forread_dispatch(const char * &f, IOFormat & format, T * x) {
 	_forread_one(f, format, *x);
 };
-void _forreadfree_dispatch(const char * &f, IOFormat & format, char * x) {
+/*TODO: duplicate symbol*/
+inline
+void _forread_dispatch(const char * &f, IOFormat & format, char * x) {
     _forread_one(f, format, x);
 };
 inline void _forread_dispatch(const char * &f, IOFormat & format, std::string * x) {
@@ -204,9 +206,13 @@ template <typename T>
 void _forreadfree_dispatch(const char * &f, farray<T> * x) {
 	_forreadfree_one_arrf(f, *x);
 };
+/* TODO: duplicate symbol */
+inline
 void _forreadfree_dispatch(const char * &f, char * x) {
     _forreadfree_one(f, x);
 };
+/* TODO: duplicate symbol */
+inline
 void _forreadfree_dispatch(const char * &f, std::string * x) {
     _forreadfree_one(f, *x);
 };

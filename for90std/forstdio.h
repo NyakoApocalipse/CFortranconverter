@@ -688,12 +688,12 @@ void forreadfree(FILE * f, T&& x, Args &&... args) {
 // void forreadfree(FILE * f, T&& x) {
 // 	_forreadfree_dispatch(f, x);
 // };
+#include "forstdio_es.h"
 
 void forrewind(int unit, foroptional<int> iostat, foroptional<forlabel> err);
 void forbackspace(int unit, foroptional<int> iostat, foroptional<forlabel> err);
 void forrewind(FILE * f, foroptional<int> iostat, foroptional<forlabel> err);
 void forbackspace(FILE * f, foroptional<int> iostat, foroptional<forlabel> err);
 
-#include "forstdio_es.h"
 
 _NAMESPACE_FORTRAN_END
