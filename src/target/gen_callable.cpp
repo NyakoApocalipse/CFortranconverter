@@ -100,9 +100,9 @@ void regen_function_array(FunctionInfo * finfo, ParseNode & callable) {
             {
                 // variable
                 check_implicit_variable(finfo, head_name);
-            }else{
-              finfo->use_stmts.push_back(callable.child.at(3));
-}
+            }else if(callable.child.size()>3){
+              finfo->use_stmts.push_back(callable.child.at(3)); /* add #include "*.h" */
+			}
 		}
 		string argtable_str;
 		/**************

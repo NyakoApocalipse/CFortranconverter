@@ -393,9 +393,9 @@ if(minfo.is_set){
 	* function definitions
 	* the `main` program
 	*************/
-    codes = use_statements + codes;
 	codes = forward_decls + codes;
 	codes = common_decls + codes;
+    codes = use_statements + codes;
 
 	get_context().program_tree.get_what() = codes;
 }
