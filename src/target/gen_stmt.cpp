@@ -168,7 +168,9 @@ std::string regen_stmt(FunctionInfo * finfo, ParseNode & stmt) {
                     vinfo->vardef_node = new ParseNode(pointer);
 
 
-                    VariableInfo *pvinfo = add_variable(get_context().current_module, finfo->local_name,
+                    /* variable might be declared before, e.g., as function argument. */
+                    VariableInfo *pvinfo = get_variable(get_context().current_module, finfo->local_name, pointer.get_what());
+                    if(!pvinfo) pvinfo = add_variable(get_context().current_module, finfo->local_name,
                                                         pointer.get_what(), VariableInfo{});
                     pvinfo->desc.merge(vinfo->desc);
                     pvinfo->desc.target = false;
@@ -185,30 +187,35 @@ std::string regen_stmt(FunctionInfo * finfo, ParseNode & stmt) {
                     /* nodet.parr = p; */
                     sprintf(codegen_buf, "\n%s.parr = %s;",pointee_name.c_str(), pointer.get_what().c_str());
                     string assign = string(codegen_buf);
+                    /* not all target need reset/slice parsing */
                     /* nodet.reset_array({{1,3},{1,4}}); */
-                    ParseNode& argtable = pointee.get(0).get(1);
-                    vector<string> sizes;
-                    string expression="1";
-                    for(ParseNode* e: argtable){
-                        if(e->token_equals(TokenMeta::META_INTEGER,TokenMeta::Int)){
-                            sizes.push_back(e->get_what());
-                            expression+=string(" * ")+e->get_what();
-                        }else{
-                            sprintf(codegen_buf,"(%%d / (%s))",expression.c_str());
-                            sizes.emplace_back(string(codegen_buf));
-                            break;
+                    if(pointee.child.size()>0&&pointee.get(0).child.size()>1){
+
+                        ParseNode& argtable = pointee.get(0).get(1);
+                        vector<string> sizes;
+                        string expression="1";
+                        for(ParseNode* e: argtable){
+                            if(e->token_equals(TokenMeta::META_INTEGER,TokenMeta::Int)){
+                                sizes.push_back(e->get_what());
+                                expression+=string(" * ")+e->get_what();
+                            }else{
+                                sprintf(codegen_buf,"(%%d / (%s))",expression.c_str());
+                                sizes.emplace_back(string(codegen_buf));
+                                break;
+                            }
                         }
+                        string slice_str;
+                        for(auto str:sizes){
+                            sprintf(codegen_buf,",{%d,%s}",1,str.c_str());
+                            slice_str+=string(codegen_buf);
+                        }
+                        slice_str = slice_str.substr(1);
+                        slice_str=string("{")+slice_str+string("}");
+                        sprintf(codegen_buf, "\n%s.reset_array(%s);",pointee_name.c_str(),slice_str.c_str());
+                        string reshape = string(codegen_buf);
+                        pvinfo->vardef_node->get_what() = assign+reshape;
                     }
-                    string slice_str;
-                    for(auto str:sizes){
-                        sprintf(codegen_buf,",{%d,%s}",1,str.c_str());
-                        slice_str+=string(codegen_buf);
-                    }
-                    slice_str = slice_str.substr(1);
-                    slice_str=string("{")+slice_str+string("}");
-                    sprintf(codegen_buf, "\n%s.reset_array(%s);",pointee_name.c_str(),slice_str.c_str());
-                    string reshape = string(codegen_buf);
-                    pvinfo->vardef_node->get_what() = assign+reshape;
+                    else pvinfo->vardef_node->get_what() = assign;
                     continue;
                 }
             }

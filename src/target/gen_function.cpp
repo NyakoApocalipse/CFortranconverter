@@ -88,10 +88,13 @@ void get_full_paramtable(FunctionInfo * finfo) {
 					print_error("Invalid interface: " + funcdef_node->get_what());
 				}
 			}else {
+
 				ParseNode * vardef_node = vinfo->vardef_node;
+                /* dead code, plus when variable is initilized with pointer function, i.e., cray pointer variable, following child indexing will lead to fatal error
 				// variable
 				ParseNode & entity_variable = vardef_node->get(2);
 				ParseNode & initial = entity_variable.get(1);
+                */
 
 				// set param_info for `regen_paramtable`
 				if (i + 1 != paramtable_info.size()) {
