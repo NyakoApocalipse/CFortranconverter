@@ -289,7 +289,7 @@ std::string tabber(const std::string & src, bool tail_crlf) {
 	std::string ans = "";
 	std::istringstream f(src);
 	while (std::getline(f, newline)) {
-		ans += '\t';
+		if(newline.front()!='#')ans += '\t';
 		ans += newline;
 		ans += '\n';
 	}

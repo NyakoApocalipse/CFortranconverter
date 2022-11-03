@@ -67,7 +67,9 @@ ParseNode gen_comment(std::string comment, bool line_comment) {
 		return gen_token(Term{ TokenMeta::Comments, "//" + comment });
 	}
 	else {
-		return gen_token(Term{ TokenMeta::Comments, "/*" + comment + "*/" });
+        if(comment.front()=='#')
+        return gen_token(Term{ TokenMeta::Comments, comment});
+		else return gen_token(Term{ TokenMeta::Comments, "/*" + comment + "*/" });
 	}
 }
 

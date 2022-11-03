@@ -50,7 +50,7 @@ void reset_simpler_context(){
 static bool is_comment_beginning(char ch) {
 	SimplerContext & sc = get_simpler_context();
 	return (ch == '!') // `!`-beginning comments can start any where
-		|| (sc.newline_marker && (ch == 'c' || ch == 'C'));
+		|| (sc.newline_marker && (ch == 'c' || ch == 'C' || ch=='#'));
 };
 static bool is_name(char ch) {
 	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
