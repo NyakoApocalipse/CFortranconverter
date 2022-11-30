@@ -245,7 +245,7 @@ std::string regen_stmt(FunctionInfo * finfo, ParseNode & stmt) {
                 }
 
             }
-			if (get_function("", name) != nullptr) {
+			if (get_function("", name) != nullptr && finfo->local_name!=name) { /* if in the function with same name, its the return value variable, do not skip! */
 				// declared function
 			}
 			else {

@@ -49,6 +49,7 @@ void gen_fortran_program(const ParseNode & wrappers) {
     ModuleInfo minfo;
 
 
+    bool has_block_data_struct = false;
 	for (ParseNode * wrapper_ptr : get_context().program_tree)
 	{
 		ParseNode & wrapper = *wrapper_ptr;
@@ -59,8 +60,9 @@ void gen_fortran_program(const ParseNode & wrappers) {
 				script_program.addchild(wrapper.get(j));
 			}
 		}
-		else if (wrapper.token_equals(TokenMeta::NT_PROGRAM_EXPLICIT))
+		else if (wrapper.token_equals(TokenMeta::NT_PROGRAM_EXPLICIT)||wrapper.token_equals(TokenMeta::NT_BLOCKDATA))
 		{
+            has_block_data_struct = wrapper.token_equals(TokenMeta::NT_BLOCKDATA);
 			for (int j = 0; j < wrapper.get(0).length(); j++)
 			{
 				script_program.addchild(wrapper.get(0).get(j));
@@ -257,7 +259,8 @@ void gen_fortran_program(const ParseNode & wrappers) {
     // main program code
 	regen_all_variables_decl_str(program_info, script_program);
 	main_code = tabber(script_program.get_what());
-    sprintf(codegen_buf, "int main()\n{\n%s\treturn 0;\n}", main_code.c_str());
+    if(!has_block_data_struct)sprintf(codegen_buf, "int main()\n{\n%s\treturn 0;\n}", main_code.c_str());
+    else sprintf(codegen_buf, "%s", main_code.c_str());
     main_code = codegen_buf;
     boost::trim(script_program.get_what());
     if(!script_program.get_what().empty())

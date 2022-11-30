@@ -226,7 +226,7 @@ using namespace std;
 			}
 		| YY_DIMENSION '(' paramtable ')'
 			{
-				// if write `',' YY_DIMENSION` in `var_def` will cause conflict at ',' 
+				// if write `',' YY_DIMENSION` in `var_def` will cause conflict at ','
 				// if is array reduce immediately and goto `var_def` 
 				// do not parse array slices here because this is difficult 
 				ARG_OUT dimen_slice = YY2ARG($3);
@@ -1170,6 +1170,12 @@ using namespace std;
 				insert_comments(YY2ARG($$));
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
 			}
+		| data_stmt
+			{
+				$$ = $1;
+				insert_comments(YY2ARG($$));
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
+			}
 		|
 			{
 				$$ = RETURN_NT(gen_token(Term{ TokenMeta::NT_STATEMENT, "" }));
@@ -1729,6 +1735,12 @@ using namespace std;
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
 				CLEAN_DELETE($1);
 			}
+		| YY_WORD '=' _optional_device
+		{
+		    $$ = $3;
+			update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($3));
+			CLEAN_DELETE($1,$2);
+		}
 /* according to brief.md, string is converted to nothing, so here we add support for reading from string */
 		| YY_STRING
 			{
@@ -1783,6 +1795,14 @@ using namespace std;
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
 				CLEAN_DELETE($1);
 			}
+	        | YY_FMT '=' YY_INTEGER
+                        {
+			           	  ARG_OUT integer = YY2ARG($3);
+				          std::string location_label = integer.get_what();
+				          $$ = RETURN_NT(gen_token(Term{ TokenMeta::NT_FORMATTER_LOCATION, location_label }));
+				          update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($3));
+				          CLEAN_DELETE($1,$2,$3);
+                        }
 	        | YY_FMT '=' YY_STRING
                         {
                           ARG_OUT s = YY2ARG($3);
@@ -1813,7 +1833,20 @@ using namespace std;
 	*	or SIZE = scalar-default-int-variable
 	*	or EOR = label
 	******************/
-	io_info : '(' _optional_device ',' _optional_formatter ')'
+
+	/* read (unit=txts,fmt=100,err=200) */
+	_optional_error: ',' YY_WORD '=' YY_INTEGER
+	  {
+				$$ = RETURN_NT(gen_dummy());
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($4));
+				CLEAN_DELETE($1, $2, $3, $4);
+	  }
+	|
+	  {
+	  			$$ = RETURN_NT(gen_dummy());
+	  			update_pos(YY2ARG($$));
+	  }
+	io_info : '(' _optional_device ',' _optional_formatter _optional_error ')'
 			{
 				/******************
 				* target code of io_info depend on context
@@ -1823,8 +1856,8 @@ using namespace std;
 				ARG_OUT _optional_formatter = YY2ARG($4);
 				ParseNode newnode = gen_token(Term{ TokenMeta::META_NONTERMINAL, "" }, _optional_device, _optional_formatter);
 				$$ = RETURN_NT(newnode);
-				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($5));
-				CLEAN_DELETE($1, $2, $3, $4, $5);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($6));
+				CLEAN_DELETE($1, $2, $3, $4, $5, $6);
 			}
 		| _optional_formatter ','
 			{				
@@ -2048,6 +2081,17 @@ using namespace std;
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($6));
 				CLEAN_DELETE($1, $2, $3, $4, $5, $6);
 			}*/
+		| YY_PARAMETER '(' paramtable ')'
+			{
+				ParseNode variable_desc_elem = gen_token(Term{ TokenMeta::NT_VARIABLEDESC, WHEN_DEBUG_OR_EMPTY("NT_VARIABLEDESC GENERATED IN") }); // const
+				set_variabledesc_attr(variable_desc_elem, boost::none, true, boost::none, boost::none, boost::none, boost::none, boost::none, boost::none, boost::none, boost::none);
+
+				ARG_OUT paramtable = YY2ARG($3);
+				ParseNode type_spec = gen_token(Term {TokenMeta::Implicit_Decl, ""});
+				$$ = RETURN_NT(gen_vardef(type_spec, variable_desc_elem, paramtable));
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($4));
+				CLEAN_DELETE($1, $2, $3, $4);
+			}
 		| variable_desc_elem paramtable
 			{
 				ARG_OUT variable_desc_elem = YY2ARG($1);
@@ -2515,7 +2559,30 @@ using namespace std;
 
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($11));
 				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
-			}	
+			}
+		| type_name YY_FUNCTION YY_WORD '(' paramtable ')' _optional_result at_least_one_end_line suite _optional_endfunction _optional_name
+			{
+				ARG_OUT variable_function = YY2ARG($3); // function name
+				// enumerate parameter list
+				ARG_OUT paramtable = YY2ARG($5);
+
+				ParseNode var_desc = (gen_token(Term{ TokenMeta::NT_VARIABLEDESC, WHEN_DEBUG_OR_EMPTY("NT_VARIABLEDESC GENERATED IN") }));
+				set_variabledesc_attr(var_desc, boost::none, boost::none, boost::none, boost::none, boost::none, boost::none, boost::none, boost::none, boost::none, boost::none);
+				ParseNode variable = (gen_token(Term{ TokenMeta::UnknownVariant, variable_function.get_what()}));
+				ParseNode var_param = gen_token(Term{ TokenMeta::NT_ARGTABLE_PURE , variable.get_what()}, variable);
+				ParseNode ret_val = gen_vardef(YY2ARG($1), var_desc, var_param);
+				ret_val.get_what() = variable_function.get_what();
+
+				ARG_OUT suite = YY2ARG($9);
+				suite.addchild(ret_val,false);/* so that the return variable definition will be generated when regen_stmt */
+
+				ParseNode kvparamtable = promote_argtable_to_paramtable(paramtable); // a flattened parameter list with all keyvalue elements
+				ParseNode newnode = gen_token(Term{ TokenMeta::NT_FUNCTIONDECLARE, "" }, gen_dummy(), variable_function, kvparamtable, ret_val, suite);
+				$$ = RETURN_NT(newnode);
+
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($11));
+				CLEAN_DELETE($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
+			}
 		| dummy_function_iden _optional_function YY_WORD at_least_one_end_line suite _optional_endfunction _optional_name
 			{
 				ARG_OUT variable_function = YY2ARG($3); // function name
@@ -2585,6 +2652,13 @@ using namespace std;
 				$$ = RETURN_NT(gen_token(Term{ TokenMeta::NT_PROGRAM_EXPLICIT, suite.get_what() }, suite));
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($6));
 				CLEAN_DELETE($1, $2, $3, $4, $5, $6);
+			}
+			| YY_BLOCK YY_DATA _optional_name at_least_one_end_line suite _optional_endprogram _optional_name
+			{
+				ParseNode & suite = YY2ARG($5);
+				$$ = RETURN_NT(gen_token(Term{ TokenMeta::NT_BLOCKDATA, suite.get_what() }, suite));
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($7));
+				CLEAN_DELETE($1, $2, $3, $4, $5, $6,$7);
 			}
 
 	wrapper : program
