@@ -1420,6 +1420,15 @@ using namespace std;
                 $$ = $1;
                 update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($1));
             }
+        | '-' %prec YY_NEG literal
+			{
+				ARG_OUT exp1 = YY2ARG($2);
+				ARG_OUT op = YY2ARG($1);
+				ParseNode opnew = gen_token(Term{ TokenMeta::Neg, "-%s" });
+				$$ = RETURN_NT(gen_promote(opnew.get_what(), TokenMeta::NT_EXPRESSION, exp1, opnew));
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($2));
+				CLEAN_DELETE($1, $2);
+			}
         | YY_WORD
             {
                 //printf("in c_in_clist:YY_WORD\n");
