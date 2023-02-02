@@ -1264,6 +1264,17 @@ using namespace std;
 				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($2));
 				CLEAN_DELETE($1, $2);
 			}
+		| YY_GOTO '(' paramtable ')' ',' exp
+			{
+				printf("============");
+				ARG_OUT options = YY2ARG($3);
+				ARG_OUT exp = YY2ARG($6);
+				$$ = RETURN_NT(gen_token(Term{TokenMeta::Goto, "branch"}));
+				$$->addchild(options);
+				$$->addchild(exp);
+				update_pos(YY2ARG($$), YY2ARG($1), YY2ARG($6));
+				CLEAN_DELETE($1, $2, $3, $4, $5, $6);
+			}
 
 	pause_stmt : YY_PAUSE literal
 			{

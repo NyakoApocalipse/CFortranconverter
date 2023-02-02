@@ -114,9 +114,29 @@ std::string regen_stmt(FunctionInfo * finfo, ParseNode & stmt) {
 		}
 		else if (stmt.get(0).token_equals(TokenMeta::Goto))
 		{
-			sprintf(codegen_buf, "goto LABEL_%s_%s;", finfo->local_name.c_str(), stmt.get_what().c_str());
-			newsuitestr += string(codegen_buf);
-			newsuitestr += '\n';
+            if(stmt.get(0).child.empty()){
+                sprintf(codegen_buf, "goto LABEL_%s_%s;", finfo->local_name.c_str(), stmt.get_what().c_str());
+                newsuitestr += string(codegen_buf);
+                newsuitestr += '\n';
+            }
+            else{
+                /** GOTO stmt ref https://docs.oracle.com/cd/E19957-01/805-4939/6j4m0vn9l/index.html
+                 *  for90.y:1267, added 2 children, parameter and exp
+                 */
+                ParseNode &goto_stmt = stmt.get(0);
+                ParseNode &options = goto_stmt.get(0);
+                ParseNode &choice = goto_stmt.get(1);
+                for(int i=1; i<=options.child.size(); i++){
+                    sprintf(codegen_buf, "if (((int)%s)==%d) goto LABEL_%s_%s;", choice.get_what().c_str(), i,
+                            finfo->local_name.c_str(), options.get(i-1).get_what().c_str());
+                    newsuitestr += string(codegen_buf);
+                    newsuitestr += '\n';
+                }
+                sprintf(codegen_buf, "continue;");
+                newsuitestr += string(codegen_buf);
+                newsuitestr += '\n';
+
+            }
 		}
         else if (stmt.get(0).token_equals(TokenMeta::Break))
         {
@@ -232,7 +252,7 @@ std::string regen_stmt(FunctionInfo * finfo, ParseNode & stmt) {
                     get_variabledesc_attr(vardescattr).kind = kind;
                 }
             }
-            if(!entity_variable.get(1).child.empty())
+            if(entity_variable.child[1]!=nullptr&&!entity_variable.get(1).child.empty())
             {
                 ParseNode & var_desc_tail = entity_variable.get(1).get(0);
                 if(var_desc_tail.get_what()=="_fullr" || var_desc_tail.get_what()=="_fulli")
