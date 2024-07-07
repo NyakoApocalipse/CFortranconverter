@@ -30,7 +30,8 @@
 // const map has no operator[]
 const std::map<std::string, std::string> pre_map{
     {"integer", "int"},        {"logical", "bool"},
-    {"character", "string"},   {"real", "double"},
+    //{"character", "string"},   {"real", "double"},
+    {"character", "forstring"},   {"real", "double"},
     {"double", "double"},      {"doubleprecision", "double"},
     {"complex", "forcomplex"}, {"cycle", "continue"},
     {"exit", "break"},         {"null()", "null"}};
@@ -53,7 +54,7 @@ const std::map<std::string, std::string> funcname_map{
     ,
     {"int", "to_int"},
     {"bool", "to_bool"},
-    {"char", "to_string"},
+    {"char", "for_to_string"},
     {"float", "to_double"},
     {"doubleprecision", "to_double"},
     {"forcomplex", "to_forcomplex"}
@@ -70,7 +71,8 @@ const std::map<std::string, std::string> funcname_map{
     {"maxloc", "formaxloc"},
     {"minloc", "forminloc"},
     {"maxval", "formaxval"},
-    {"minval", "forminval"}
+    {"minval", "forminval"},
+    {"len", "forlen"}
 
     // file
     ,
@@ -136,7 +138,8 @@ const std::map<std::string, std::vector<KeywordParamInfo>> sysfunc_args = {
     {"formaxval", {{"dim", "int", ""}, {"mask", "mask_wrapper_t", ""}}},
     {"forminval", {{"dim", "int", ""}, {"mask", "mask_wrapper_t", ""}}},
     {"formaxloc", {{"dim", "int", ""}, {"mask", "mask_wrapper_t", ""}}},
-    {"forminloc", {{"dim", "int", ""}, {"mask", "mask_wrapper_t", ""}}}
+    {"forminloc", {{"dim", "int", ""}, {"mask", "mask_wrapper_t", ""}}},
+    {"forlen", {{"s", "forstring", ""}}}
 
     ,
     {"abs", {}},
@@ -162,7 +165,7 @@ const std::map<std::string, std::vector<KeywordParamInfo>> sysfunc_args = {
     ,
     {"to_int", {}},
     {"to_bool", {}},
-    {"to_string", {}},
+    {"for_to_string", {}},
     {"to_double", {}},
     {"malloc", {{"size", "int", ""}}},
     {"to_forcomplex", {}}

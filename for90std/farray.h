@@ -812,6 +812,13 @@ auto forslice(const farray<T> & farr, const slice_info<fsize_t>(&tp)[X]) {
 	return _RTN(narr);
 }
 
+template <typename T, int X>
+void assign_forslice(farray<T> & farr, farray<T> ins, const slice_info<fsize_t>(&tp)[X])
+{
+	// not implement yet
+	return;
+}
+
 template <typename T>
 farray<T> fortranspose(const farray<T> & farr) {
 	farray<T> narr(farr);

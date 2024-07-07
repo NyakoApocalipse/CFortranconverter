@@ -2414,7 +2414,9 @@ NORMAL_CONDITION:
 	}
 	if (pre_map.find(lowercase_name) != pre_map.end()) {
 		// replace according to tokenizer.cpp
+		//std::cout <<"previous "<< lowercase_name << endl;
 		lowercase_name = pre_map.at(lowercase_name);
+		//std::cout <<"after "<< lowercase_name << endl;
 	}
 	update_yylval(Term{ tok, std::string(lowercase_name) });
 	return yytok;

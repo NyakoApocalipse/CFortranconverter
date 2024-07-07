@@ -713,7 +713,9 @@ CHECK_CONCATED_WORD:
 	}
 	if (pre_map.find(lowercase_name) != pre_map.end()) {
 		// replace according to tokenizer.cpp
+		//std::cout <<"previous "<< lowercase_name << std::endl;
 		lowercase_name = pre_map.at(lowercase_name);
+		//std::cout <<"after "<< lowercase_name << std::endl;
 	}
 	if (keyword_iter != keywords.end())
 	{

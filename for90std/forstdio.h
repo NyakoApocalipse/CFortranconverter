@@ -19,6 +19,7 @@
 
 #pragma once
 #include "farray.h"
+#include "forstring.h"
 #include <iostream>
 #include <cstdio>
 #include <string>
@@ -464,6 +465,11 @@ void _forwritefree_dispatch(FILE * f, const ImpliedDo<T, F> & l) {
 inline void forwritefree(FILE * f) {
 	fprintf(f, "\n");
 };
+inline void forwritefree(FILE * f, const forstring & x)
+{
+	_forwritefree_dispatch(f, x.s);
+	fprintf(f, "\t");
+}
 template <typename T, typename... Args>
 void forwritefree(FILE * f, const T & x, Args&&... args) {
 	_forwritefree_dispatch(f, x);

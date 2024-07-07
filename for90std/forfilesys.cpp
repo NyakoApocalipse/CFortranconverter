@@ -179,5 +179,6 @@ void forclosefile(foroptional<int> unit, foroptional<int> iostat, foroptional<fo
         bool result;
         result = (access(file.get().c_str(), 0)==0);
         exist = result;
-    }
+    
 }
+_NAMESPACE_FORTRAN_END
