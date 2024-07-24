@@ -33,6 +33,7 @@ void foropenfile(int unit, foroptional<int> iostat, foroptional<forlabel> err, f
 	, foroptional<std::string> delim = None, foroptional<std::string> pad = None);
 void forclosefile(foroptional<int> unit, foroptional<int> iostat, foroptional<forlabel> err = None, foroptional<std::string> status = None);
 FILE * get_file(int unit);
+int get_recllen(int unit);
 void flush_fileno();
 void forinquire(foroptional<int> unit, foroptional<std::string> file, foroptional<int> iostat, foroptional<forlabel> err, bool &exist);
 _NAMESPACE_FORTRAN_END

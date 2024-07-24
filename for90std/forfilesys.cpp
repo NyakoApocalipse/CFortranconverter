@@ -16,7 +16,7 @@
 *   with this program; if not, write to the Free Software Foundation, Inc.,
 *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
+#include <fstream>
 #include <algorithm>
 #include <map>
 #include "forfilesys.h"
@@ -24,11 +24,18 @@
 
 _NAMESPACE_FORTRAN_BEGIN
 std::map<int, FILE *> filenos;
+std::map<int, int> reclnum;
 bool forfilesys_inited = false;
 FILE * get_file(int unit) {
 	if (!forfilesys_inited) flush_fileno();
 	auto iter = filenos.find(unit);
 	assert(iter != filenos.end());
+	return iter->second;
+}
+int get_recllen(int unit) {
+	if(!forfilesys_inited) flush_fileno();
+	auto iter = reclnum.find(unit);
+	assert(iter != reclnum.end());
 	return iter->second;
 }
 void flush_fileno() {
@@ -99,12 +106,24 @@ void foropenfile(int unit, foroptional<int> iostat, foroptional<forlabel> err, f
 	s = access.value_or("sequential");
 	transform(s.begin(), s.end(), s.begin(), to_lower);
 	if (s == "sequential") {
-
+		if(recl != 0)
+		{
+			throw "Sequential file's recl must be 0";
+		}
+		// recl must be 0
 	}
 	else if (s == "direct") {
-
+		if(recl <= 0)
+		{
+			throw "Direct file's recl must larger than 0";
+		}
+		// recl must not be 0
 	}
 	else {
+		if(recl < 0 && recl != -1) // -1 is special value means no recl specified
+		{
+			throw "Any file's recl must equal or larger than 0";
+		}
 		// not inited or else value
 	}
 
@@ -156,6 +175,7 @@ void foropenfile(int unit, foroptional<int> iostat, foroptional<forlabel> err, f
 		mode = flag_replace + flag_rw;
 	}
 	filenos[unit] = fopen(file.get().c_str(), mode.c_str());
+	reclnum[unit] = recl;
 	if (position.value_or("rewind") == "")
 	{
 		fseek(filenos[unit], 0, SEEK_SET);

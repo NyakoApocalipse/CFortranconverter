@@ -20,6 +20,7 @@
 #pragma once
 #include "farray.h"
 #include "forstring.h"
+#include <algorithm>
 #include <iostream>
 #include <cstdio>
 #include <string>
@@ -395,6 +396,70 @@ inline void forwrite(FILE * f, const std::string & format) {
 
 
 // free format
+// template for free write with recl
+void _forwritefree_one_recl(int fnum, std::string x) {
+	FILE* f = get_file(fnum);
+	int length = get_recllen(fnum);
+	char buffer[length];
+	size_t filled = std::min(length, int(x.size()));
+	memcpy(buffer, x.c_str(), filled);
+	if (filled < length)
+		std::fill(buffer+filled+1, buffer+length, ' '); // Fill the blank with character space
+	if(fwrite(buffer, 1, length, f) < length)
+	{
+		// left place for abnormal handling code
+	}
+	return;
+}
+void _forwritefree_one_recl(int fnum, bool x) {
+	std::string xx = x == true ? "T" : "F";
+	_forwritefree_one_recl(fnum, xx);
+	return;
+}
+void _forwritefree_one_recl(int fnum, const char * x) {
+	// much slower than string because of unknown length of x
+	FILE* f = get_file(fnum);
+	int length = get_recllen(fnum);
+	char buffer[length];
+	// find end of char[]
+	int count = 0;
+	while(x[count] != '\0')
+	{
+		count++;
+	}
+
+	size_t filled = std::min(count, length);
+	memcpy(buffer, x, filled);
+	if (filled < length)
+		std::fill(buffer+filled+1, buffer+length, ' '); // Fill the blank with character space
+	if(fwrite(buffer, 1, length, f) < length)
+	{
+		// left place for abnormal handling code
+	}
+	return;
+}
+template <typename T>
+void _forwritefree_one_recl(int fnum, T x) {
+	FILE* f = get_file(fnum);
+	int length = get_recllen(fnum);
+	char buffer[length];
+	size_t filled = min(sizeof(T), length);
+	memcpy(buffer, &x, filled);
+	if (filled < length)
+		std::fill(buffer+sizeof(T)+1, buffer+length, ' '); // Fill the blank with character space
+	if(fwrite(buffer, 1, length, f) < length)
+	{
+		// left place for abnormal handling code
+	}
+	return;
+	
+};
+
+
+
+
+
+
 // write free step 2
 inline void _forwritefree_one(FILE * f, int x) {
 	fprintf(f, "%d", x);
@@ -598,6 +663,70 @@ void forread(FILE * f, const std::string & format, T && x, Args&&... args) {
 };
 
 // free format
+// template for free read with recl
+void _forreadfree_one_recl(int fnum, std::string & x)
+{
+	FILE* f = get_file(fnum);
+	int length = get_recllen(fnum);
+	size_t filled = std::min(int(x.size()), length);
+	char buffer[filled];
+
+	if(fread(buffer, 1, length, f) < length)
+	{
+		// left place for abnormal handling code
+	}
+
+	x = buffer; // Will remove original string and cover it with buffer
+	return;
+}
+void _forreadfree_one_recl(int fnum, bool & x)
+{
+	FILE* f = get_file(fnum);
+	int length = get_recllen(fnum);
+	char buffer[length];
+
+	if(fread(buffer, 1, length, f) < length)
+	{
+		// left place for abnormal handling code
+	}
+	if(buffer[0] == 'T' || buffer[0] == 't') x = true;
+	else x = false;
+	return;
+}
+void _forreadfree_one_recl(int fnum, char* x)
+{
+	// make sure x have enough space to store
+	FILE* f = get_file(fnum);
+	int length = get_recllen(fnum);
+	if(fread(x, 1, length, f) < length)
+	{
+		// left place for abnormal handling code
+	}
+
+	return;
+}
+
+
+template <typename T>
+void _forreadfree_one_recl(int fnum, T & x)
+{
+	FILE* f = get_file(fnum);
+	int length = get_recllen(fnum);
+	size_t filled = min(sizeof(T), length);
+	char buffer[filled];
+	if(filled < sizeof(T))
+	{
+		perror("Warning! RECL NOT matching type!");
+	}
+	if(fread(buffer, 1, length, f) < length)
+	{
+		// left place for abnormal handling code
+	}
+
+	memcpy(&x, buffer, sizeof(T));
+	return;
+}
+
 // read free step 2
 
 inline void _forreadfree_one(FILE * f, int & x) {
@@ -653,6 +782,7 @@ template <typename T>
 void _forreadfree_dispatch(FILE * f, T * x) {
 	_forreadfree_one(f, *x);
 };
+
 template <typename ... Types>
 void _forreadfree_dispatch(FILE * f, IOStuff<Types...> & iostuff) {
 	foreach_tuple(iostuff.tp, [&](auto & x) {
@@ -666,6 +796,7 @@ void _forreadfree_dispatch(FILE * f, ImpliedDo<T, F> & l) {
 		_forreadfree_dispatch(f, l.get_next());
 	}
 };
+// dummy impl?
 template <typename ... Types>
 void _forreadfree_dispatch(FILE * f, IOStuff<Types...> && iostuff) {
 	foreach_tuple(iostuff.tp, [&](auto & x) {
@@ -679,6 +810,8 @@ void _forreadfree_dispatch(FILE * f, ImpliedDo<T, F> && l) {
 		_forreadfree_dispatch(f, l.get_next());
 	}
 };
+// dummy impl end?
+
 // read free step 0
 inline void forreadfree(FILE * f) {
   //do nothing
