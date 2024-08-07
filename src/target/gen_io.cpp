@@ -158,13 +158,13 @@ void regen_read(FunctionInfo * finfo, ParseNode & stmt) {
 	else if (io_info.get(1).token_equals(TokenMeta::NT_AUTOFORMATTER)) {
 		if (is_stdio) {
 			// device = "5"; // stdin
-			sprintf(codegen_buf, "forreadfree(stdin%s %s);\n", (argtable_str==""?"":","), argtable_str.c_str());
+			sprintf(codegen_buf, "forreadfree(5, stdin%s %s);\n", (argtable_str==""?"":","), argtable_str.c_str());
 		}
         else if(is_2_string){
-            sprintf(codegen_buf, "forreadfree(%s%s %s);\n", device.c_str(), (argtable_str == "" ? "" : ","), argtable_str.c_str());
+            sprintf(codegen_buf, "forreadfree(%s, get_file(%s)%s %s);\n", device.c_str(), device.c_str(), (argtable_str == "" ? "" : ","), argtable_str.c_str());
         }
 		else {
-			sprintf(codegen_buf, "forreadfree(get_file(%s)%s %s);\n", device.c_str(), (argtable_str == "" ? "" : ","), argtable_str.c_str());
+			sprintf(codegen_buf, "forreadfree(%s, get_file(%s)%s %s);\n", device.c_str(), device.c_str(), (argtable_str == "" ? "" : ","), argtable_str.c_str());
 		}
 	}
 	else {
@@ -208,10 +208,10 @@ void regen_write(FunctionInfo * finfo, ParseNode & stmt) {
 	if (io_info.get(1).token_equals(TokenMeta::NT_AUTOFORMATTER)) {
 		if (is_stdio) {
 			// device = "6"; // stdout
-			sprintf(codegen_buf, "forwritefree(stdout%s %s);\n", (argtable_str == "" ? "" : ","), argtable_str.c_str());
+			sprintf(codegen_buf, "forwritefree(6, stdout%s %s);\n", (argtable_str == "" ? "" : ","), argtable_str.c_str());
 		}
 		else {
-			sprintf(codegen_buf, "forwritefree(get_file(%s)%s %s);\n", device.c_str(), (argtable_str == "" ? "" : ","), argtable_str.c_str());
+			sprintf(codegen_buf, "forwritefree(%s, get_file(%s)%s %s);\n", device.c_str(), device.c_str(), (argtable_str == "" ? "" : ","), argtable_str.c_str());
 		}
 	}
 	else {

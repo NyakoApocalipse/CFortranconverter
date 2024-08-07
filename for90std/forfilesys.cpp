@@ -35,7 +35,7 @@ FILE * get_file(int unit) {
 int get_recllen(int unit) {
 	if(!forfilesys_inited) flush_fileno();
 	auto iter = reclnum.find(unit);
-	assert(iter != reclnum.end());
+	if(iter == reclnum.end() && (unit==5 || unit==6)) return -1; // allow nonexistent unit
 	return iter->second;
 }
 void flush_fileno() {
@@ -105,24 +105,26 @@ void foropenfile(int unit, foroptional<int> iostat, foroptional<forlabel> err, f
 
 	s = access.value_or("sequential");
 	transform(s.begin(), s.end(), s.begin(), to_lower);
+	if (!recl.inited()) recl = -1;
+	int reclength = to_int(recl);
 	if (s == "sequential") {
-		if(recl != 0)
+		if(reclength != 0)
 		{
-			throw "Sequential file's recl must be 0";
+			perror("Sequential file's recl must be 0");
 		}
 		// recl must be 0
 	}
 	else if (s == "direct") {
-		if(recl <= 0)
+		if(reclength <= 0 && reclength != -1)
 		{
-			throw "Direct file's recl must larger than 0";
+			perror("Direct file's recl must larger than 0");
 		}
 		// recl must not be 0
 	}
 	else {
-		if(recl < 0 && recl != -1) // -1 is special value means no recl specified
+		if(reclength < 0 && reclength != -1) // -1 is special value means no recl specified
 		{
-			throw "Any file's recl must equal or larger than 0";
+			perror("Any file's recl must equal or larger than 0");
 		}
 		// not inited or else value
 	}
@@ -175,7 +177,8 @@ void foropenfile(int unit, foroptional<int> iostat, foroptional<forlabel> err, f
 		mode = flag_replace + flag_rw;
 	}
 	filenos[unit] = fopen(file.get().c_str(), mode.c_str());
-	reclnum[unit] = recl;
+	iostat = filenos[unit] == nullptr ? 0 : 1;
+	reclnum[unit] = reclength;
 	if (position.value_or("rewind") == "")
 	{
 		fseek(filenos[unit], 0, SEEK_SET);

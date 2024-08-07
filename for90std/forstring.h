@@ -126,9 +126,9 @@ struct forstring{
 		std::string inputs = this->s+s2.s;
 		return forstring(inputs);
 	}
-	forstring& operator()(int i){
+	char& operator()(int i){
 		// not available
-		return ;
+		return s[i];
 	}
 
 
