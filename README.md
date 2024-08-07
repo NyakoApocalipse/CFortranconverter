@@ -3,9 +3,18 @@ For project introduction and steps to build and install, refer to [CFortranTrans
 
 In this work, we try to add more features in fortran to the work of [YHN](https://github.com/YHN-ice/CFortranTranslator):
 
+## 2024.08.07
+1. Add implement of assign_forslice() in "farray.h" . 
+2. We decided not to implement param rec in direct read/write file operations. If anyone wants to implement it, please refer to advices below:
+
+2-1 Use the way like reclnum or filenos to add a global flag mapped with file no. .
+2-2 Change it in foropenfile(), so we can use the flag later. Default is "Sequential".
+2-3 Add new implements of read/write operations with param rec, remind that without param recl, rec is illegal.
+2-4 Update other functions to fit your codes, if needed, update code generation part.
+
 
 ## 2024.08.07
-We implement file io with param recl and other params. But we didn't implement the file io while ACCESS="direct" and param recl is determined. In this case, if io with param rec determined, the file pointer should move rec*recl units before any other operation. We will implement it and function assign_forslice() which is in "farray.h" before 8.09 . The latter function is used to make a deep copy slice of any farray object.
+We implement file io with param recl and other params. But we didn't implement the file io while ACCESS="direct" and param recl is determined. In this case, if io with param rec determined, the file pointer should move rec*recl units before any other operation. We will implement it and function assign_forslice() which is in "farray.h" before Aug 9th. The latter function is used to assign farray itself instead of make a deep copy slice of any farray object.
 
 
 

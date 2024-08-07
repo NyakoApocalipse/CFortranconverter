@@ -815,7 +815,26 @@ auto forslice(const farray<T> & farr, const slice_info<fsize_t>(&tp)[X]) {
 template <typename T, int X>
 void assign_forslice(farray<T> & farr, farray<T> ins, const slice_info<fsize_t>(&tp)[X])
 {
-	// not implement yet
+
+	for(int j = 0; j < X; j++)
+	{
+		if(tp[j].to < farr.size() && tp[j].fr >= 0)
+		{
+			int count = 0;
+			for(int i = tp[j].fr; i <= tp[j].to; i+=tp[j].step)
+			{
+				farr[i] = ins[count];
+				count++;
+			}
+		}
+		else 
+		{
+			printf("Over bound from assign_forslice!!\n");
+			return;
+		}
+	}
+
+	// not tested yet
 	return;
 }
 
