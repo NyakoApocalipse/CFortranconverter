@@ -17,9 +17,12 @@
 *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#pragma once
+// #pragma once
+#ifndef _FORSTDIO_H_
+#define _FORSTDIO_H_
 #include "farray.h"
 #include "forstring.h"
+#include "forfilesys.h"
 #include <algorithm>
 #include <iostream>
 #include <cstdio>
@@ -314,6 +317,10 @@ inline void _str_fprintf(FILE * f, const std::string & _format, const std::strin
 }
 _NAMESPACE_HIDDEN_END
 
+
+
+
+
 // format
 // write formatted step 2
 template <typename T>
@@ -397,8 +404,8 @@ inline void forwrite(FILE * f, const std::string & format) {
 
 // free format
 // template for free write with recl
-void _forwritefree_one_recl(int fnum, std::string x) {
-	FILE* f = get_file(fnum);
+inline void _forwritefree_one_recl(int fnum, FILE * f, std::string x) {
+	// FILE* f = get_file(fnum);
 	int length = get_recllen(fnum);
 	char buffer[length];
 	size_t filled = std::min(length, int(x.size()));
@@ -410,15 +417,15 @@ void _forwritefree_one_recl(int fnum, std::string x) {
 		// left place for abnormal handling code
 	}
 	return;
-}
-void _forwritefree_one_recl(int fnum, bool x) {
+};
+inline void _forwritefree_one_recl(int fnum, FILE * f, bool x) {
 	std::string xx = x == true ? "T" : "F";
-	_forwritefree_one_recl(fnum, xx);
+	_forwritefree_one_recl(fnum, f, xx);
 	return;
-}
-void _forwritefree_one_recl(int fnum, const char * x) {
+};
+inline void _forwritefree_one_recl(int fnum, FILE * f, const char * x) {
 	// much slower than string because of unknown length of x
-	FILE* f = get_file(fnum);
+	// FILE* f = get_file(fnum);
 	int length = get_recllen(fnum);
 	char buffer[length];
 	// find end of char[]
@@ -437,13 +444,13 @@ void _forwritefree_one_recl(int fnum, const char * x) {
 		// left place for abnormal handling code
 	}
 	return;
-}
+};
 template <typename T>
-void _forwritefree_one_recl(int fnum, T x) {
-	FILE* f = get_file(fnum);
+inline void _forwritefree_one_recl(int fnum, FILE * f, T x) {
+	// FILE* f = get_file(fnum);
 	int length = get_recllen(fnum);
 	char buffer[length];
-	size_t filled = min(sizeof(T), length);
+	size_t filled = sizeof(T) > length ? sizeof(T) : length;
 	memcpy(buffer, &x, filled);
 	if (filled < length)
 		std::fill(buffer+sizeof(T)+1, buffer+length, ' '); // Fill the blank with character space
@@ -461,88 +468,185 @@ void _forwritefree_one_recl(int fnum, T x) {
 
 
 // write free step 2
-inline void _forwritefree_one(FILE * f, int x) {
-	fprintf(f, "%d", x);
+inline void _forwritefree_one(int fnum, FILE * f, int x) {
+	if(get_recllen(fnum) != -1) _forwritefree_one_recl(fnum, f, x);
+	else fprintf(f, "%d", x);
 };
-inline void _forwritefree_one(FILE * f, long long x) {
-	fprintf(f, "%lld", x);
+inline void _forwritefree_one(int fnum, FILE * f, long long x) {
+	if(get_recllen(fnum) != -1) _forwritefree_one_recl(fnum, f, x);
+	else fprintf(f, "%lld", x);
 };
-inline void _forwritefree_one(FILE * f, double x) {
-	fprintf(f, "%lf", x);
+inline void _forwritefree_one(int fnum, FILE * f, double x) {
+	if(get_recllen(fnum) != -1) _forwritefree_one_recl(fnum, f, x);
+	else fprintf(f, "%lf", x);
 };
-inline void _forwritefree_one(FILE * f, long double x) {
-	fprintf(f, "%Lf", x);
+inline void _forwritefree_one(int fnum, FILE * f, long double x) {
+	if(get_recllen(fnum) != -1) _forwritefree_one_recl(fnum, f, x);
+	else fprintf(f, "%Lf", x);
 };
-inline void _forwritefree_one(FILE * f, std::string x) {
-	fprintf(f, "%s", x.c_str());
+inline void _forwritefree_one(int fnum, FILE * f, std::string x) {
+	if(get_recllen(fnum) != -1) _forwritefree_one_recl(fnum, f, x);
+	else fprintf(f, "%s", x.c_str());
 };
-inline void _forwritefree_one(FILE * f, bool x) {
-	fprintf(f, "%s", x ? "T" : "F");
+inline void _forwritefree_one(int fnum, FILE * f, bool x) {
+	if(get_recllen(fnum) != -1) _forwritefree_one_recl(fnum, f, x);
+	else fprintf(f, "%s", x ? "T" : "F");
 };
-inline void _forwritefree_one(FILE * f, const char * x) {
-	fprintf(f, "%s", x);
+inline void _forwritefree_one(int fnum, FILE * f, const char * x) {
+	if(get_recllen(fnum) != -1) _forwritefree_one_recl(fnum, f, x);
+	else fprintf(f, "%s", x);
 };
 template <typename T>
-void _forwritefree_one(FILE * f, T x) {
-	fprintf(f, "[object %s] %p", typeid(T).name(), &x);
+inline void _forwritefree_one(int fnum, FILE * f, T x) {
+	if(get_recllen(fnum) != -1) _forwritefree_one_recl(fnum, f, x);
+	else fprintf(f, "[object %s] %p", typeid(T).name(), &x);
 };
 
+// won't use after 1.1.0, and may be deleted in the future
+// inline void _forwritefree_one(FILE * f, int x) {
+// 	fprintf(f, "%d", x);
+// };
+// inline void _forwritefree_one(FILE * f, long long x) {
+// 	fprintf(f, "%lld", x);
+// };
+// inline void _forwritefree_one(FILE * f, double x) {
+// 	fprintf(f, "%lf", x);
+// };
+// inline void _forwritefree_one(FILE * f, long double x) {
+// 	fprintf(f, "%Lf", x);
+// };
+// inline void _forwritefree_one(FILE * f, std::string x) {
+// 	fprintf(f, "%s", x.c_str());
+// };
+// inline void _forwritefree_one(FILE * f, bool x) {
+// 	fprintf(f, "%s", x ? "T" : "F");
+// };
+// inline void _forwritefree_one(FILE * f, const char * x) {
+// 	fprintf(f, "%s", x);
+// };
+// template <typename T>
+// void _forwritefree_one(FILE * f, T x) {
+// 	fprintf(f, "[object %s] %p", typeid(T).name(), &x);
+// };
+
+
 template <typename T>
-void _forwritefree_one_arrf(FILE * f, const farray<T> & x) {
+inline void _forwritefree_one_arrf(int fnum, FILE * f, const farray<T> & x) {
 	auto iter = x.cbegin();
 	for (fsize_t i = 0; i < x.flatsize(); i++)
 	{
 		if(i > 0) fprintf(f, "\t");
-		_forwritefree_one(f, *(iter + i));
+		_forwritefree_one(fnum, f, *(iter + i));
 	}
 	fprintf(f, "\n");
 };
-// write free step 1
 
+// won't use after 1.1.0, and may be deleted in the future
+// template <typename T>
+// void _forwritefree_one_arrf(FILE * f, const farray<T> & x) {
+// 	auto iter = x.cbegin();
+// 	for (fsize_t i = 0; i < x.flatsize(); i++)
+// 	{
+// 		if(i > 0) fprintf(f, "\t");
+// 		_forwritefree_one(f, *(iter + i));
+// 	}
+// 	fprintf(f, "\n");
+// };
+
+
+// write free step 1
 template <typename T>
-void _forwritefree_dispatch(FILE * f, const farray<T> & x) {
-	_forwritefree_one_arrf(f, x);
+inline void _forwritefree_dispatch(int fnum, FILE * f, const farray<T> & x) {
+	_forwritefree_one_arrf(fnum, f, x);
 };
 template <typename T>
-void _forwritefree_dispatch(FILE * f, const T & x) {
-	_forwritefree_one(f, x);
+inline void _forwritefree_dispatch(int fnum, FILE * f, const T & x) {
+	_forwritefree_one(fnum, f, x);
 };
 template <typename ... Types>
-void _forwritefree_dispatch(FILE * f, const IOStuff<Types...> & iostuff) {
+inline void _forwritefree_dispatch(int fnum, FILE * f, const IOStuff<Types...> & iostuff) {
 	bool first = true;
 	foreach_tuple(iostuff.tp, [&](auto x) {
 		if(first) first = false; else fprintf(f, "\t");
-		_forwritefree_dispatch(f, x);
+		_forwritefree_dispatch(fnum, f, x);
 	});
 };
 template <typename T, typename F>
-void _forwritefree_dispatch(FILE * f, const ImpliedDo<T, F> & l) {
+inline void _forwritefree_dispatch(int fnum, FILE * f, const ImpliedDo<T, F> & l) {
 	bool first = true;
 	while (l.has_next())
 	{
 		if(first) first = false; else fprintf(f, "\t");
 		const T & x = l.get_next();
-		_forwritefree_dispatch(f, x);
+		_forwritefree_dispatch(fnum, f, x);
 	}
 };
 
+
+
+
+// won't use after 1.1.0, and may be deleted in the future
+// template <typename T>
+// void _forwritefree_dispatch(FILE * f, const farray<T> & x) {
+// 	_forwritefree_one_arrf(f, x);
+// };
+// template <typename T>
+// void _forwritefree_dispatch(FILE * f, const T & x) {
+// 	_forwritefree_one(f, x);
+// };
+// template <typename ... Types>
+// void _forwritefree_dispatch(FILE * f, const IOStuff<Types...> & iostuff) {
+// 	bool first = true;
+// 	foreach_tuple(iostuff.tp, [&](auto x) {
+// 		if(first) first = false; else fprintf(f, "\t");
+// 		_forwritefree_dispatch(f, x);
+// 	});
+// };
+// template <typename T, typename F>
+// void _forwritefree_dispatch(FILE * f, const ImpliedDo<T, F> & l) {
+// 	bool first = true;
+// 	while (l.has_next())
+// 	{
+// 		if(first) first = false; else fprintf(f, "\t");
+// 		const T & x = l.get_next();
+// 		_forwritefree_dispatch(f, x);
+// 	}
+// };
+
 // write free step 0
-inline void forwritefree(FILE * f) {
+inline void forwritefree(int fnum, FILE * f) {
 	fprintf(f, "\n");
 };
-inline void forwritefree(FILE * f, const forstring & x)
+inline void forwritefree(int fnum, FILE * f, const forstring & x)
 {
-	_forwritefree_dispatch(f, x.s);
+	_forwritefree_dispatch(fnum, f, x.s);
 	fprintf(f, "\t");
-}
+};
 template <typename T, typename... Args>
-void forwritefree(FILE * f, const T & x, Args&&... args) {
-	_forwritefree_dispatch(f, x);
+inline void forwritefree(int fnum, FILE * f, const T & x, Args&&... args) {
+	_forwritefree_dispatch(fnum, f, x);
 	fprintf(f, "\t");
-	forwritefree(f, std::forward<Args>(args)...);
+	forwritefree(fnum, f, std::forward<Args>(args)...);
 };
 
-/* because the tail call will call forwritefree(FILE *f), this func could be left out */
+
+// won't use after 1.1.0, and may be deleted in the future
+// inline void forwritefree(FILE * f) {
+// 	fprintf(f, "\n");
+// };
+// inline void forwritefree(FILE * f, const forstring & x)
+// {
+// 	_forwritefree_dispatch(f, x.s);
+// 	fprintf(f, "\t");
+// }
+// template <typename T, typename... Args>
+// void forwritefree(FILE * f, const T & x, Args&&... args) {
+// 	_forwritefree_dispatch(f, x);
+// 	fprintf(f, "\t");
+// 	forwritefree(f, std::forward<Args>(args)...);
+// };
+
+/* because the tail call will call forwritefree(int fnum, FILE *f), this func could be left out */
 // template <typename T>
 // void forwritefree(FILE * f, const T & x) {
 // 	_forwritefree_dispatch(f, x);
@@ -551,21 +655,21 @@ void forwritefree(FILE * f, const T & x, Args&&... args) {
 
 
 inline void forprintfree() {
-	forwritefree(stdout, "\n");
+	forwritefree(6, stdout, "\n");
 };
 template <typename T, typename... Args>
-void forprintfree(const T & x, Args&&... args) {
+inline void forprintfree(const T & x, Args&&... args) {
 	// no format
-	forwritefree(stdout, x, std::forward<Args>(args)...);
+	forwritefree(6, stdout, x, std::forward<Args>(args)...);
 };
 
 template <typename T, typename... Args>
-void forprint(IOFormat && format, const T & x, Args&&... args) {
+inline void forprint(IOFormat && format, const T & x, Args&&... args) {
 	// format
 	forwrite(stdout, format, x, std::forward<Args>(args)...);
 };
 template <typename T, typename... Args>
-void forprint(const std::string & format, const T & x, Args&&... args) {
+inline void forprint(const std::string & format, const T & x, Args&&... args) {
 	// format
 	forwrite(stdout, format, x, std::forward<Args>(args)...);
 };
@@ -662,26 +766,30 @@ void forread(FILE * f, const std::string & format, T && x, Args&&... args) {
 	forread(f, _format, std::forward<Args>(args)...);
 };
 
+
+
 // free format
 // template for free read with recl
-void _forreadfree_one_recl(int fnum, std::string & x)
+inline void _forreadfree_one_recl(int fnum, FILE * f, std::string & x)
 {
-	FILE* f = get_file(fnum);
+	// FILE* f = get_file(fnum);
 	int length = get_recllen(fnum);
 	size_t filled = std::min(int(x.size()), length);
 	char buffer[filled];
 
-	if(fread(buffer, 1, length, f) < length)
+	char dump[length-filled];
+
+	if(fread(buffer, 1, filled, f) < length)
 	{
-		// left place for abnormal handling code
+		if(sizeof(dump)) fread(buffer, 1, length-filled, f);
 	}
 
 	x = buffer; // Will remove original string and cover it with buffer
 	return;
-}
-void _forreadfree_one_recl(int fnum, bool & x)
+};
+inline void _forreadfree_one_recl(int fnum, FILE * f, bool & x)
 {
-	FILE* f = get_file(fnum);
+	// FILE* f = get_file(fnum);
 	int length = get_recllen(fnum);
 	char buffer[length];
 
@@ -692,11 +800,11 @@ void _forreadfree_one_recl(int fnum, bool & x)
 	if(buffer[0] == 'T' || buffer[0] == 't') x = true;
 	else x = false;
 	return;
-}
-void _forreadfree_one_recl(int fnum, char* x)
+};
+inline void _forreadfree_one_recl(int fnum, FILE * f, char* x)
 {
 	// make sure x have enough space to store
-	FILE* f = get_file(fnum);
+	// FILE* f = get_file(fnum);
 	int length = get_recllen(fnum);
 	if(fread(x, 1, length, f) < length)
 	{
@@ -704,124 +812,232 @@ void _forreadfree_one_recl(int fnum, char* x)
 	}
 
 	return;
-}
+};
+inline void _forreadfree_one_recl(int fnum, FILE * f, forstring & x)
+{
+	// FILE* f = get_file(fnum);
+	int length = get_recllen(fnum);
+	// size_t filled = x.length > length ? x.length : length;
+	char buffer[length];
+	// char dump[length-filled];
 
+	if(fread(buffer, 1, length, f) < length)
+	{
+		// if(sizeof(dump)) fread(buffer, 1, length-filled, f);
+	}
+	x = std::string(buffer);
+	// memcpy(&x, buffer, filled);
+	return;
+};
 
 template <typename T>
-void _forreadfree_one_recl(int fnum, T & x)
+inline void _forreadfree_one_recl(int fnum, FILE * f, T & x)
 {
-	FILE* f = get_file(fnum);
+	// FILE* f = get_file(fnum);
 	int length = get_recllen(fnum);
-	size_t filled = min(sizeof(T), length);
+	size_t filled = sizeof(T) > length ? sizeof(T) : length;
 	char buffer[filled];
 	if(filled < sizeof(T))
 	{
 		perror("Warning! RECL NOT matching type!");
 	}
-	if(fread(buffer, 1, length, f) < length)
+	char dump[length-filled];
+
+	if(fread(buffer, 1, filled, f) < length)
 	{
-		// left place for abnormal handling code
+		if(sizeof(dump)) fread(buffer, 1, length-filled, f);
 	}
 
 	memcpy(&x, buffer, sizeof(T));
 	return;
-}
+};
 
 // read free step 2
 
-inline void _forreadfree_one(FILE * f, int & x) {
-	int res = fscanf(f, "%d", &x);
+inline void _forreadfree_one(int fnum, FILE * f, int & x) {
+	if(get_recllen(fnum) != -1) _forreadfree_one_recl(fnum, f, x);
+	else int res = fscanf(f, "%d", &x);
 
 };
-inline void _forreadfree_one(FILE * f, long long & x) {
-	fscanf(f, "%lld", &x);
+inline void _forreadfree_one(int fnum, FILE * f, long long & x) {
+	if(get_recllen(fnum) != -1) _forreadfree_one_recl(fnum, f, x);
+	else fscanf(f, "%lld", &x);
 };
-inline void _forreadfree_one(FILE * f, double & x) {
-	fscanf(f, "%lf", &x);
+inline void _forreadfree_one(int fnum, FILE * f, double & x) {
+	if(get_recllen(fnum) != -1) _forreadfree_one_recl(fnum, f, x);
+	else fscanf(f, "%lf", &x);
 };
-inline void _forreadfree_one(FILE * f, long double & x) {
-	fscanf(f, "%Lf", &x);
+inline void _forreadfree_one(int fnum, FILE * f, long double & x) {
+	if(get_recllen(fnum) != -1) _forreadfree_one_recl(fnum, f, x);
+	else fscanf(f, "%Lf", &x);
 };
-inline void _forreadfree_one(FILE * f, std::string & x) {
-	_str_fscanf(f, "%s", x);
+inline void _forreadfree_one(int fnum, FILE * f, std::string & x) {
+	if(get_recllen(fnum) != -1) _forreadfree_one_recl(fnum, f, x);
+	else _str_fscanf(f, "%s", x);
 };
-inline void _forreadfree_one(FILE * f, bool & x) {
-	char bool_str[10];
-	fscanf(f, "%s", bool_str);
-	if (bool_str[0] == 'T' || bool_str[0] == 't')
-	{
-		x = true;
-	}
+inline void _forreadfree_one(int fnum, FILE * f, bool & x) {
+	if(get_recllen(fnum) != -1) _forreadfree_one_recl(fnum, f, x);
 	else {
-		x = false;
+		char bool_str[10];
+		fscanf(f, "%s", bool_str);
+		if (bool_str[0] == 'T' || bool_str[0] == 't')
+		{
+			x = true;
+		}
+		else {
+			x = false;
+		}
 	}
 };
-inline void _forreadfree_one(FILE * f, char * x) {
-	fscanf(f, "%s", x);
+inline void _forreadfree_one(int fnum, FILE * f, char * x) {
+	if(get_recllen(fnum) != -1) _forreadfree_one_recl(fnum, f, x);
+	else fscanf(f, "%s", x);
 };
-inline void _forreadfree_one(FILE * f, char & x) {
-	fscanf(f, "%c", &x);
+inline void _forreadfree_one(int fnum, FILE * f, char & x) {
+	// need to be observe more
+	if(get_recllen(fnum) != -1) _forreadfree_one_recl(fnum, f, x);
+	else fscanf(f, "%c", &x);
 };
-
+inline void _forreadfree_one(int fnum, FILE * f, forstring & x) {
+	if(get_recllen(fnum) != -1) _forreadfree_one_recl(fnum, f, x);
+	else {
+		std::string temp;
+		_str_fscanf(f, "%s", temp);
+		x = temp;
+	}
+	
+};
 
 template <typename T>
-void _forreadfree_one_arrf(FILE * f, farray<T> & x) {
+inline void _forreadfree_one_arrf(int fnum, FILE * f, farray<T> & x) {
 	auto iter = x.begin();
 	for (fsize_t i = 0; i < x.flatsize(); i++)
 	{
 		_forreadfree_one(f, *(iter + i));
 	}
 };
+
+
+// won't use after 1.1.0, and may be deleted in the future
+// inline void _forreadfree_one(FILE * f, int & x) {
+// 	int res = fscanf(f, "%d", &x);
+
+// };
+// inline void _forreadfree_one(FILE * f, long long & x) {
+// 	fscanf(f, "%lld", &x);
+// };
+// inline void _forreadfree_one(FILE * f, double & x) {
+// 	fscanf(f, "%lf", &x);
+// };
+// inline void _forreadfree_one(FILE * f, long double & x) {
+// 	fscanf(f, "%Lf", &x);
+// };
+// inline void _forreadfree_one(FILE * f, std::string & x) {
+// 	_str_fscanf(f, "%s", x);
+// };
+// inline void _forreadfree_one(FILE * f, bool & x) {
+// 	char bool_str[10];
+// 	fscanf(f, "%s", bool_str);
+// 	if (bool_str[0] == 'T' || bool_str[0] == 't')
+// 	{
+// 		x = true;
+// 	}
+// 	else {
+// 		x = false;
+// 	}
+// };
+// inline void _forreadfree_one(FILE * f, char * x) {
+// 	fscanf(f, "%s", x);
+// };
+// inline void _forreadfree_one(FILE * f, char & x) {
+// 	fscanf(f, "%c", &x);
+// };
+
+
+// template <typename T>
+// void _forreadfree_one_arrf(FILE * f, farray<T> & x) {
+// 	auto iter = x.begin();
+// 	for (fsize_t i = 0; i < x.flatsize(); i++)
+// 	{
+// 		_forreadfree_one(f, *(iter + i));
+// 	}
+// };
+
+
+
+
 // read free step 1
 
 template <typename T>
-void _forreadfree_dispatch(FILE * f, farray<T> * x) {
-	_forreadfree_one_arrf(f, *x);
+inline void _forreadfree_dispatch(int fnum, FILE * f, farray<T> * x) {
+	_forreadfree_one_arrf(fnum, f, *x);
 };
 template <typename T>
-void _forreadfree_dispatch(FILE * f, T * x) {
-	_forreadfree_one(f, *x);
+inline void _forreadfree_dispatch(int fnum, FILE * f, T * x) {
+	_forreadfree_one(fnum, f, *x);
 };
 
 template <typename ... Types>
-void _forreadfree_dispatch(FILE * f, IOStuff<Types...> & iostuff) {
+inline void _forreadfree_dispatch(int fnum, FILE * f, IOStuff<Types...> & iostuff) {
 	foreach_tuple(iostuff.tp, [&](auto & x) {
-		_forreadfree_dispatch(f, x);
+		_forreadfree_dispatch(fnum, f, x);
 	});
 };
 template <typename T, typename F>
-void _forreadfree_dispatch(FILE * f, ImpliedDo<T, F> & l) {
+inline void _forreadfree_dispatch(int fnum, FILE * f, ImpliedDo<T, F> & l) {
 	while (l.has_next())
 	{
-		_forreadfree_dispatch(f, l.get_next());
+		_forreadfree_dispatch(fnum, f, l.get_next());
 	}
 };
-// dummy impl?
-template <typename ... Types>
-void _forreadfree_dispatch(FILE * f, IOStuff<Types...> && iostuff) {
-	foreach_tuple(iostuff.tp, [&](auto & x) {
-		_forreadfree_dispatch(f, x);
-	});
-};
-template <typename T, typename F>
-void _forreadfree_dispatch(FILE * f, ImpliedDo<T, F> && l) {
-	while (l.has_next())
-	{
-		_forreadfree_dispatch(f, l.get_next());
-	}
-};
-// dummy impl end?
+
+
+
+// won't use after 1.1.0, and may be deleted in the future
+// template <typename T>
+// void _forreadfree_dispatch(FILE * f, farray<T> * x) {
+// 	_forreadfree_one_arrf(f, *x);
+// };
+// template <typename T>
+// void _forreadfree_dispatch(FILE * f, T * x) {
+// 	_forreadfree_one(f, *x);
+// };
+// template <typename ... Types>
+// void _forreadfree_dispatch(FILE * f, IOStuff<Types...> && iostuff) {
+// 	foreach_tuple(iostuff.tp, [&](auto & x) {
+// 		_forreadfree_dispatch(f, x);
+// 	});
+// };
+// template <typename T, typename F>
+// void _forreadfree_dispatch(FILE * f, ImpliedDo<T, F> && l) {
+// 	while (l.has_next())
+// 	{
+// 		_forreadfree_dispatch(f, l.get_next());
+// 	}
+// };
 
 // read free step 0
-inline void forreadfree(FILE * f) {
+inline void forreadfree(int fnum, FILE * f) {
   //do nothing
 };
 
 template <typename T, typename... Args>
-void forreadfree(FILE * f, T&& x, Args &&... args) {
-	_forreadfree_dispatch(f, x);
-	forreadfree(f, std::forward<Args>(args)...);
+inline void forreadfree(int fnum, FILE * f, T&& x, Args &&... args) {
+	_forreadfree_dispatch(fnum, f, x);
+	forreadfree(fnum, f, std::forward<Args>(args)...);
 };
+
+
+// won't use after 1.1.0, and may be deleted in the future
+// inline void forreadfree(FILE * f) {
+//   //do nothing
+// };
+
+// template <typename T, typename... Args>
+// void forreadfree(FILE * f, T&& x, Args &&... args) {
+// 	_forreadfree_dispatch(f, x);
+// 	forreadfree(f, std::forward<Args>(args)...);
+// };
 /* because the tail call will call forreadfree(FILE *f), this func could be left out */
 // template <typename T>
 // void forreadfree(FILE * f, T&& x) {
@@ -836,3 +1052,4 @@ void forbackspace(FILE * f, foroptional<int> iostat, foroptional<forlabel> err);
 
 
 _NAMESPACE_FORTRAN_END
+#endif
