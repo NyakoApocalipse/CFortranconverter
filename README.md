@@ -3,6 +3,11 @@ For project introduction and steps to build and install, refer to [CFortranTrans
 
 In this work, we try to add more features in fortran to the work of [YHN](https://github.com/YHN-ice/CFortranTranslator):
 
+## 2024.08.14
+We temporarily stop improving this project for some reason. 
+
+There are something other developers need to know: we add some common words like "result"\"data" and so on as keywords to test some functions of this project. We didn't remove these changes until the newest version, so if you use this project and find some error messages like "Unexpected 'YY_RESULT' ", this is the reason. If you want to remove this change or what, please check in src/grammar/ folder for more hints. 
+
 ## 2024.08.07
 1. Add implement of assign_forslice() in "farray.h" . 
 2. We decided not to implement param rec in direct read/write file operations. If anyone wants to implement it, please refer to advices below:
